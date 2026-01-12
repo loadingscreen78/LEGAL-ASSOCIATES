@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc,
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,19 +35,37 @@ export const useProducts = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      let query = supabase.from('products').select('*').order('created_at', { ascending: false });
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      console.log('🔥 Firebase products count:', querySnapshot.docs.length);
       
-      // Regular users only see active products
+      let productsData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('🔥 Product data:', { id: doc.id, ...data });
+        return {
+          id: doc.id,
+          ...data
+        };
+      }) as Product[];
+      
+      console.log('🔥 Total products before filter:', productsData.length);
+      
+      // Filter active products for non-admin users
       if (!isAdmin) {
-        query = query.eq('is_active', true);
+        productsData = productsData.filter(p => p.is_active);
+        console.log('🔥 Active products after filter:', productsData.length);
       }
-
-      const { data, error } = await query;
       
-      if (error) throw error;
-      setProducts((data || []) as Product[]);
+      // Sort by created_at descending
+      productsData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      console.log('🔥 Final products to display:', productsData);
+      setProducts(productsData);
     } catch (error: any) {
-      console.error('Error fetching products:', error);
+      console.error('❌ Error fetching products:', error);
       toast({
         title: "Error",
         description: "Failed to fetch products. Please try again.",
@@ -60,21 +87,19 @@ export const useProducts = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .insert([productData])
-        .select()
-        .single();
-
-      if (error) throw error;
+      const docRef = await addDoc(collection(db, 'products'), {
+        ...productData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
       toast({
         title: "Success",
         description: "Product created successfully!",
       });
 
-      await fetchProducts(); // Refresh the list
-      return { data, error: null };
+      await fetchProducts();
+      return { data: { id: docRef.id, ...productData }, error: null };
     } catch (error: any) {
       console.error('Error creating product:', error);
       toast({
@@ -97,22 +122,19 @@ export const useProducts = () => {
     }
 
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .update(updates)
-        .eq('id', productId)
-        .select()
-        .single();
-
-      if (error) throw error;
+      const productRef = doc(db, 'products', productId);
+      await updateDoc(productRef, {
+        ...updates,
+        updated_at: new Date().toISOString(),
+      });
 
       toast({
         title: "Success",
         description: "Product updated successfully!",
       });
 
-      await fetchProducts(); // Refresh the list
-      return { data, error: null };
+      await fetchProducts();
+      return { data: updates, error: null };
     } catch (error: any) {
       console.error('Error updating product:', error);
       toast({
@@ -135,19 +157,15 @@ export const useProducts = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', productId);
-
-      if (error) throw error;
+      const productRef = doc(db, 'products', productId);
+      await deleteDoc(productRef);
 
       toast({
         title: "Success",
         description: "Product deleted successfully!",
       });
 
-      await fetchProducts(); // Refresh the list
+      await fetchProducts();
       return { error: null };
     } catch (error: any) {
       console.error('Error deleting product:', error);
@@ -171,23 +189,21 @@ export const useProducts = () => {
     }
 
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${productId || Date.now()}.${fileExt}`;
-      const filePath = `products/${fileName}`;
+      // Use Supabase Storage for image upload
+      const { uploadProductImage: uploadToSupabase } = await import('@/lib/supabaseClient');
+      
+      console.log('📤 Uploading image to Supabase Storage...');
+      const imageUrl = await uploadToSupabase(file);
+      console.log('✅ Image uploaded successfully:', imageUrl);
 
-      const { error: uploadError } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, file);
+      toast({
+        title: "Success",
+        description: "Image uploaded successfully to Supabase!",
+      });
 
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath);
-
-      return { data: data.publicUrl, error: null };
+      return { data: imageUrl, error: null };
     } catch (error: any) {
-      console.error('Error uploading image:', error);
+      console.error('❌ Error uploading image to Supabase:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to upload image. Please try again.",
@@ -201,19 +217,28 @@ export const useProducts = () => {
   useEffect(() => {
     fetchProducts();
 
-    const channel = supabase
-      .channel('products-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'products' },
-        () => {
-          fetchProducts(); // Refetch when products change
-        }
-      )
-      .subscribe();
+    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+      let productsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+      
+      // Filter active products for non-admin users
+      if (!isAdmin) {
+        productsData = productsData.filter(p => p.is_active);
+      }
+      
+      // Sort by created_at descending
+      productsData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
+      
+      setProducts(productsData);
+    });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => unsubscribe();
   }, [user, isAdmin]);
 
   return {

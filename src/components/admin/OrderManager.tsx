@@ -16,9 +16,12 @@ export const OrderManager = () => {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
 
+  console.log('📦 OrderManager - Loading:', loading);
+  console.log('📦 OrderManager - Orders:', orders.length, orders);
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.shipping_address?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;

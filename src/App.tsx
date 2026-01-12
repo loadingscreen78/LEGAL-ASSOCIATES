@@ -25,6 +25,8 @@ import Login from "./pages/Login";
 import CheckoutInfo from "./pages/CheckoutInfo";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboardNew from "./pages/AdminDashboardNew";
+import FirestoreDebug from "./pages/FirestoreDebug";
+import OrderTracking from "./pages/OrderTracking";
 
 const queryClient = new QueryClient();
 
@@ -60,8 +62,10 @@ const AppContent = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/admin-dashboard/*" element={<AdminDashboardNew />} />
+        <Route path="/track-order/:orderId" element={<OrderTracking />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/order-success" element={<OrderSuccess />} />
+        <Route path="/debug" element={<FirestoreDebug />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>

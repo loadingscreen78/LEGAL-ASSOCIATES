@@ -14,7 +14,7 @@ import { ArrowLeft } from 'lucide-react';
 
 const Checkout = () => {
   const { items, getTotalPrice, clearCart } = useCart();
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const { createOrder } = useOrders();
   const navigate = useNavigate();
   
@@ -28,6 +28,9 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Wait for auth to finish loading before redirecting
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/login');
       return;
@@ -42,7 +45,7 @@ const Checkout = () => {
         pincode: profile.pincode || ''
       });
     }
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, authLoading]);
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -78,8 +81,10 @@ const Checkout = () => {
         payment_method: 'pending'
       });
       
-      // Store order ID for payment page
+      // Store order ID and amount for payment page
+      const totalAmount = getTotalPrice();
       localStorage.setItem('currentOrderId', orderId);
+      localStorage.setItem('orderAmount', totalAmount.toString());
       
       // Clear cart after successful order creation
       clearCart();

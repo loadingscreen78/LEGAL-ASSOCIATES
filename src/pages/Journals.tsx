@@ -5,8 +5,9 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useProducts } from '@/hooks/useProducts';
 
-const journalData = [
+const fallbackJournalData = [
   {
     id: 1,
     title: "Odisha Law Journal",
@@ -62,8 +63,44 @@ const Journals = () => {
   const [selectedType, setSelectedType] = useState('All');
   const [selectedYear, setSelectedYear] = useState('All');
   const navigate = useNavigate();
+  const { products, loading } = useProducts();
 
-  const types = ['All', 'Digest', 'Handbook', 'Bare Act', 'Manual'];
+  console.log('📘 Journals Page - Products from hook:', products.length, products);
+  console.log('📘 Journals Page - Loading:', loading);
+
+  // Use Firebase products (journals only) if available, otherwise use fallback
+  const journalsFromFirebase = products.filter(p => p.category === 'journals');
+  console.log('📘 Journals filtered from Firebase:', journalsFromFirebase.length);
+
+  const journalData = journalsFromFirebase.length > 0 
+    ? journalsFromFirebase.map((p, index) => {
+        // Generate a simple numeric ID from the index
+        const numericId = index + 1;
+        console.log('📘 Mapping journal:', {
+          firebaseId: p.id,
+          numericId: numericId,
+          title: p.title,
+          image_url: p.image_url,
+          description: p.description,
+          has_image: !!p.image_url
+        });
+        return {
+          id: numericId,
+          firebaseId: p.id, // Keep original Firebase ID for matching
+          title: p.title,
+          year: new Date().getFullYear().toString(),
+          type: 'Journal',
+          image: p.image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
+          description: p.description || 'No description available',
+          price: p.price,
+          inStock: p.stock > 0
+        };
+      })
+    : fallbackJournalData;
+
+  console.log('📘 Journals Page - Final journalData:', journalData.length, 'items');
+
+  const types = ['All', 'Digest', 'Handbook', 'Bare Act', 'Manual', 'Journal'];
   const years = ['All', '2024', '2023', '2022'];
 
   const filteredJournals = journalData.filter(journal => {
@@ -74,10 +111,8 @@ const Journals = () => {
   });
 
   const handleJournalClick = (journalId: number) => {
-    // Only navigate if the journal ID is in our detailed journals (1-4)
-    if (journalId <= 4) {
-      navigate(`/journal/${journalId}`);
-    }
+    // Navigate to journal details page
+    navigate(`/journal/${journalId}`);
   };
 
   return (
@@ -179,8 +214,11 @@ const Journals = () => {
                   <p className="text-gray-300 mb-4 text-sm">
                     {journal.description}
                   </p>
-                  <Button className="w-full bg-gradient-to-r from-[#D4AF37] to-[#f4d03f] text-[#0F0616] hover:scale-105 transition-all duration-300 font-semibold">
-                    {journal.id <= 4 ? 'View Details' : 'Coming Soon'}
+                  <Button 
+                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#f4d03f] text-[#0F0616] hover:scale-105 transition-all duration-300 font-semibold"
+                    disabled={'inStock' in journal && !journal.inStock}
+                  >
+                    {'inStock' in journal && !journal.inStock ? 'Out of Stock' : 'View Details'}
                   </Button>
                 </div>
               </div>

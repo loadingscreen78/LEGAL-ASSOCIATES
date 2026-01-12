@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Scale, Home, Shield, User } from 'lucide-react';
+import { Eye, EyeOff, Scale, Home, Shield, User, ArrowRight, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user, isAdmin, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loginType, setLoginType] = useState<'user' | 'admin'>('user');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -30,6 +30,17 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [loaderStage, setLoaderStage] = useState<'authenticating' | 'success' | 'redirecting'>('authenticating');
   const { theme } = useTheme();
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (!authLoading && user) {
+      if (isAdmin) {
+        navigate('/admin-dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, isAdmin, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -371,19 +382,33 @@ const Login = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 bg-accent hover:bg-accent/90 text-accent-foreground font-medium transition-all duration-300 hover:shadow-lg hover:shadow-accent/25 hover:scale-[1.02]"
+                className="w-full h-12 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 text-white font-semibold text-base transition-all duration-300 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin w-4 h-4 border-2 border-accent-foreground border-t-transparent rounded-full"></div>
-                    <span>Please wait...</span>
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin w-5 h-5 border-3 border-white border-t-transparent rounded-full"></div>
+                    <span>Authenticating...</span>
                   </div>
                 ) : (
-                  loginType === 'admin' 
-                    ? 'Access Admin Portal' 
-                    : isSignUp 
-                      ? 'Create Account' 
-                      : 'Sign In'
+                  <span className="flex items-center justify-center gap-2">
+                    {loginType === 'admin' ? (
+                      <>
+                        <Shield className="w-5 h-5" />
+                        <span>Access Admin Portal</span>
+                      </>
+                    ) : isSignUp ? (
+                      <>
+                        <User className="w-5 h-5" />
+                        <span>Create Account</span>
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-5 h-5" />
+                        <span>Sign In</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </span>
                 )}
               </Button>
 

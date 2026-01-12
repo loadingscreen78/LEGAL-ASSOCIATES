@@ -87,44 +87,60 @@ export const Navigation = () => {
               
               {/* Auth Section */}
               {!loading && (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2">
                   {user ? (
-                    <div className="flex items-center space-x-3">
-                      <div className="flex items-center space-x-2 px-3 py-1 bg-muted rounded-lg">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">
-                          {user.email?.split('@')[0] || 'User'} {isAdmin && '(Admin)'}
-                        </span>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      {/* User Profile Display - Clickable */}
+                      <Link to={isAdmin ? '/admin-dashboard' : '/user-dashboard'}>
+                        <div className="flex items-center space-x-2 px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 hover:border-white/40 transition-all duration-200 cursor-pointer">
+                          <div className="relative">
+                            <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-sm border border-white/30" style={{ color: '#FFFFFF' }}>
+                              {(user.email?.charAt(0) || 'U').toUpperCase()}
+                            </div>
+                            {isAdmin && (
+                              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-yellow-400 rounded-full border-2 border-background"></div>
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-[80px]">
+                            <span className="text-xs font-bold truncate" style={{ color: '#FFFFFF' }}>
+                              {user.email?.split('@')[0] || 'User'}
+                            </span>
+                            <span className="text-[10px] font-medium" style={{ color: '#FFFFFF', opacity: 0.8 }}>
+                              {isAdmin ? 'Admin' : 'Member'}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                      
+                      {/* Dashboard Button */}
                       <Link to={isAdmin ? '/admin-dashboard' : '/user-dashboard'}>
                         <Button
-                          variant="outline"
                           size="sm"
-                          className="flex items-center space-x-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+                          className="bg-white text-black hover:bg-white/90 font-semibold"
                         >
-                          <User className="w-4 h-4" />
-                          <span>Dashboard</span>
+                          Dashboard
                         </Button>
                       </Link>
+                      
+                      {/* Logout Button */}
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
                         onClick={handleSignOut}
-                        className="flex items-center space-x-2 hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                        className="hover:text-red-400 hover:bg-red-500/20 font-medium"
+                        style={{ color: '#FFFFFF' }}
                       >
                         <LogOut className="w-4 h-4" />
-                        <span>Logout</span>
                       </Button>
                     </div>
                   ) : (
                     <Link to="/login">
                       <Button
-                        variant="outline"
                         size="sm"
-                        className="flex items-center space-x-2 hover:bg-accent hover:text-accent-foreground transition-colors"
+                        className="bg-white text-black hover:bg-white/90 font-semibold"
                       >
-                        <LogIn className="w-4 h-4" />
-                        <span>Login</span>
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Login
                       </Button>
                     </Link>
                   )}
@@ -171,44 +187,64 @@ export const Navigation = () => {
                 
                 {/* Mobile Auth Section */}
                 {!loading && (
-                  <div className="pt-3 border-t border-border mt-3">
+                  <div className="pt-3 border-t border-white/20 mt-3">
                     {user ? (
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2 px-3 py-2 bg-muted rounded-lg">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium text-foreground">
-                            {user.email?.split('@')[0] || 'User'} {isAdmin && '(Admin)'}
-                          </span>
-                        </div>
+                        {/* Mobile User Profile Card - Clickable */}
+                        <Link to={isAdmin ? '/admin-dashboard' : '/user-dashboard'} onClick={() => setIsMobileMenuOpen(false)}>
+                          <div className="flex items-center space-x-3 px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg hover:bg-white/20 hover:border-white/40 transition-all cursor-pointer">
+                            <div className="relative">
+                              <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-lg border border-white/30" style={{ color: '#FFFFFF' }}>
+                                {(user.email?.charAt(0) || 'U').toUpperCase()}
+                              </div>
+                              {isAdmin && (
+                                <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-yellow-400 rounded-full border-2 border-background"></div>
+                              )}
+                            </div>
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-sm font-bold truncate" style={{ color: '#FFFFFF' }}>
+                                {user.email?.split('@')[0] || 'User'}
+                              </span>
+                              <span className="text-xs truncate" style={{ color: '#FFFFFF', opacity: 0.8 }}>
+                                {user.email}
+                              </span>
+                              <span className="text-xs font-semibold mt-0.5" style={{ color: '#FCD34D' }}>
+                                {isAdmin ? 'Administrator' : 'Member'}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                        
+                        {/* Mobile Dashboard Button */}
                         <Link to={isAdmin ? '/admin-dashboard' : '/user-dashboard'} onClick={() => setIsMobileMenuOpen(false)}>
                           <Button
-                            variant="outline"
-                            className="w-full justify-start hover:bg-accent hover:text-accent-foreground transition-colors"
+                            className="w-full justify-start bg-white text-black hover:bg-white/90 font-semibold"
                           >
                             <User className="w-4 h-4 mr-2" />
-                            Dashboard
+                            <span>Dashboard</span>
                           </Button>
                         </Link>
+                        
+                        {/* Mobile Logout Button */}
                         <Button
                           variant="outline"
-                          className="w-full justify-start hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          className="w-full justify-start border-white/30 text-white hover:bg-red-500/20 hover:text-red-400 hover:border-red-400 font-semibold"
                           onClick={() => {
                             handleSignOut();
                             setIsMobileMenuOpen(false);
                           }}
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          Logout
+                          <span>Logout</span>
                         </Button>
                       </div>
                     ) : (
                       <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
                         <Button
-                          variant="outline"
-                          className="w-full justify-start hover:bg-accent hover:text-accent-foreground transition-colors"
+                          className="w-full justify-start bg-white text-black hover:bg-white/90 font-semibold"
                         >
                           <LogIn className="w-4 h-4 mr-2" />
-                          Login
+                          <span>Login</span>
                         </Button>
                       </Link>
                     )}

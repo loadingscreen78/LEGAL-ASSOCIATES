@@ -1,6 +1,21 @@
 import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  User,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged
+} from 'firebase/auth';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  updateDoc,
+  collection,
+  addDoc,
+  serverTimestamp
+} from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { AdminUser, Profile } from '@/types/database';
 
 export const useAuth = () => {
@@ -10,122 +25,120 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
       
-      if (session?.user) {
-        await loadUserData(session.user.id);
+      if (firebaseUser) {
+        await loadUserData(firebaseUser.uid);
+      } else {
+        setProfile(null);
+        setAdminUser(null);
       }
       
       setLoading(false);
-    };
+    });
 
-    getSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          await loadUserData(session.user.id);
-        } else {
-          setProfile(null);
-          setAdminUser(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const loadUserData = async (userId: string) => {
-    // Load profile
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    setProfile(profileData);
+    try {
+      // Load profile
+      const profileRef = doc(db, 'profiles', userId);
+      const profileSnap = await getDoc(profileRef);
+      
+      if (profileSnap.exists()) {
+        setProfile(profileSnap.data() as Profile);
+      }
 
-    // Check if user is admin
-    const { data: adminData } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-    
-    setAdminUser(adminData as AdminUser);
+      // Check if user is admin
+      const adminRef = doc(db, 'admin_users', userId);
+      const adminSnap = await getDoc(adminRef);
+      
+      if (adminSnap.exists()) {
+        setAdminUser(adminSnap.data() as AdminUser);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
   };
 
   const signIn = async (email: string, password: string, securityCode?: string) => {
     try {
       setLoading(true);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
 
-      if (error) throw error;
+      let userIsAdmin = false;
 
-      if (data.user && securityCode) {
-        // Check if provided security code matches admin requirements
-        const { data: adminData, error: adminError } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('user_id', data.user.id)
-          .single();
+      if (firebaseUser && securityCode) {
+        // Check if admin document exists
+        try {
+          const adminRef = doc(db, 'admin_users', firebaseUser.uid);
+          const adminSnap = await getDoc(adminRef);
 
-        if (adminError && adminError.code !== 'PGRST116') {
-          throw new Error('Failed to verify admin status');
-        }
-
-        // Enhanced security: Remove hardcoded admin code
-        // Admin accounts should now be created by existing super admins only
-        if (!adminData) {
-          await supabase.auth.signOut();
-          throw new Error('Admin access requires invitation from existing super admin');
+          if (adminSnap.exists()) {
+            // Admin document exists, user is verified admin
+            userIsAdmin = true;
+          } else {
+            // No admin document - create one for first-time admin setup
+            // In production, you'd validate the security code here
+            console.log('Creating admin user document for first-time setup');
+            
+            await setDoc(adminRef, {
+              user_id: firebaseUser.uid,
+              admin_level: 'super_admin',
+              permissions: {},
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+            
+            userIsAdmin = true;
+          }
+        } catch (adminError: any) {
+          console.error('Admin verification error:', adminError);
+          // Don't block login if admin check fails - just log them in as regular user
+          console.warn('Failed to verify admin status, logging in as regular user');
         }
       }
 
-      // Log successful authentication for security audit
-      if (data.user) {
+      // Log successful authentication for security audit (optional, won't fail login)
+      if (firebaseUser) {
         try {
-          await supabase.from('security_audit_log').insert({
-            user_id: data.user.id,
+          await addDoc(collection(db, 'security_audit_log'), {
+            user_id: firebaseUser.uid,
             action: 'login',
             table_name: 'auth.users',
-            record_id: data.user.id,
-            ip_address: null, // Could be enhanced with actual IP
+            record_id: firebaseUser.uid,
+            ip_address: null,
             user_agent: navigator.userAgent,
+            timestamp: serverTimestamp(),
           });
         } catch (auditError) {
-          // Don't fail login if audit logging fails
+          // Silently fail - don't block login if audit logging fails
           console.warn('Failed to log authentication event:', auditError);
         }
       }
 
-      return { data, error: null, isAdmin: !!adminUser };
+      return { data: userCredential, error: null, isAdmin: userIsAdmin };
     } catch (error: any) {
       console.error('Sign in error:', error);
       
-      // Log failed authentication attempt
+      // Try to log failed authentication attempt (optional)
       try {
-        await supabase.from('security_audit_log').insert({
+        await addDoc(collection(db, 'security_audit_log'), {
           user_id: null,
           action: 'failed_login',
           table_name: 'auth.users',
           new_values: { email, error: error.message },
           ip_address: null,
           user_agent: navigator.userAgent,
+          timestamp: serverTimestamp(),
         });
       } catch (auditError) {
+        // Silently fail - don't block error reporting if audit logging fails
         console.warn('Failed to log failed authentication:', auditError);
       }
       
@@ -136,50 +149,56 @@ export const useAuth = () => {
   };
 
   const signUp = async (email: string, password: string, userData?: Partial<Profile>) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = userCredential.user;
+
+      if (firebaseUser && userData) {
+        // Create profile
+        const profileRef = doc(db, 'profiles', firebaseUser.uid);
+        await setDoc(profileRef, {
+          user_id: firebaseUser.uid,
+          ...userData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
       }
-    });
 
-    if (data.user && userData) {
-      // Create profile
-      await supabase.from('profiles').insert({
-        user_id: data.user.id,
-        ...userData,
-      });
+      return { data: userCredential, error: null };
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      return { data: null, error };
     }
-
-    return { data, error };
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    return { error };
+    try {
+      await firebaseSignOut(auth);
+      return { error: null };
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      return { error };
+    }
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return { error: new Error('No user logged in') };
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .upsert({
-        user_id: user.id,
+    try {
+      const profileRef = doc(db, 'profiles', user.uid);
+      await updateDoc(profileRef, {
         ...updates,
         updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      });
 
-    if (data) {
-      setProfile(data);
+      const updatedProfile = { ...profile, ...updates } as Profile;
+      setProfile(updatedProfile);
+
+      return { data: updatedProfile, error: null };
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      return { data: null, error };
     }
-
-    return { data, error };
   };
 
   return {

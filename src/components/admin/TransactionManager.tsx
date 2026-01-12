@@ -12,6 +12,9 @@ export const TransactionManager = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  console.log('📊 TransactionManager - Loading:', loading);
+  console.log('📊 TransactionManager - Transactions:', transactions.length);
+
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = 
       transaction.transaction_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||

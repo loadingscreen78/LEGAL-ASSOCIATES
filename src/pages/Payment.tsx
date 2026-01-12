@@ -77,6 +77,7 @@ const Payment = () => {
 
       localStorage.setItem('orderData', JSON.stringify(orderData));
       localStorage.removeItem('currentOrderId');
+      localStorage.removeItem('orderAmount');
       
       navigate('/order-success');
     } catch (error) {
@@ -89,15 +90,17 @@ const Payment = () => {
 
   useEffect(() => {
     const currentOrderId = localStorage.getItem('currentOrderId');
-    if (!currentOrderId) {
+    const storedAmount = localStorage.getItem('orderAmount');
+    
+    if (!currentOrderId || !storedAmount) {
       navigate('/checkout');
       return;
     }
     
-    // Get order amount from cart or stored data
-    const amount = getTotalPrice();
+    // Get order amount from localStorage (cart is cleared after checkout)
+    const amount = parseFloat(storedAmount);
     setOrderAmount(amount);
-  }, [navigate, getTotalPrice]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
@@ -137,7 +140,7 @@ const Payment = () => {
               <CardContent>
                 <div className="text-center space-y-4">
                   <div className="text-4xl font-bold text-primary">
-                    ₹{getTotalPrice().toFixed(2)}
+                    ₹{orderAmount.toFixed(2)}
                   </div>
                   <p className="text-muted-foreground">
                     Total amount to be paid

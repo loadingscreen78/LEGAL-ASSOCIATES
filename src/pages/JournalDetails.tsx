@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { ArrowLeft, Minus, Plus } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
 
 const journalsData = {
   1: {
@@ -70,11 +71,52 @@ const JournalDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { products } = useProducts();
   const [quantity, setQuantity] = useState(1);
+  const [journal, setJournal] = useState<any>(null);
 
-  // Fix TypeScript error by properly typing the id parameter
-  const journalId = id ? parseInt(id) : null;
-  const journal = journalId && journalId >= 1 && journalId <= 4 ? journalsData[journalId as 1 | 2 | 3 | 4] : null;
+  useEffect(() => {
+    console.log('JournalDetails - ID from URL:', id);
+    console.log('JournalDetails - All products:', products);
+    
+    const journalId = id ? parseInt(id) : null;
+    console.log('JournalDetails - Parsed ID:', journalId);
+    
+    // Get journals with category 'journals'
+    const journals = products.filter(p => p.category === 'journals');
+    console.log('Filtered journals:', journals);
+    
+    // Find by index (since we use index + 1 as ID in Journals page)
+    const firebaseJournal = journalId ? journals[journalId - 1] : null;
+    console.log('Found Firebase journal:', firebaseJournal);
+
+    if (firebaseJournal) {
+      // Map Firebase product to journal format
+      const mappedJournal = {
+        id: journalId,
+        title: firebaseJournal.title,
+        image: firebaseJournal.image_url || '/lovable-uploads/bd9562f0-5286-4441-82a0-f16eac646a5f.png',
+        description: firebaseJournal.description || 'No description available',
+        year: new Date().getFullYear().toString(),
+        price: firebaseJournal.price,
+        story: firebaseJournal.description || 'Comprehensive legal resource for professionals and students.',
+        credits: {
+          chiefEditor: firebaseJournal.author || 'Editorial Team',
+          associateEditors: ['Legal Experts', 'Case Law Analysts'],
+          publisher: 'Law Publications India'
+        }
+      };
+      console.log('Setting journal to:', mappedJournal);
+      setJournal(mappedJournal);
+    } else if (journalId && journalId >= 1 && journalId <= 4) {
+      // Fallback to hardcoded data
+      console.log('Using hardcoded journal data');
+      setJournal(journalsData[journalId as 1 | 2 | 3 | 4]);
+    } else {
+      console.log('No journal found - setting to null');
+      setJournal(null);
+    }
+  }, [id, products]);
 
   if (!journal) {
     return (

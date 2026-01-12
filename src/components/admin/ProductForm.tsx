@@ -88,17 +88,24 @@ export const ProductForm: React.FC<ProductFormProps> = ({
     setLoading(true);
     
     try {
-      let imageUrl = product?.image_url;
+      let imageUrl = product?.image_url || '';
       
       // Upload new image if selected
       if (imageFile) {
-        const { data: uploadedUrl, error: uploadError } = await uploadProductImage(
-          imageFile,
-          product?.id
-        );
-        
-        if (uploadError) throw uploadError;
-        imageUrl = uploadedUrl;
+        try {
+          const { data: uploadedUrl, error: uploadError } = await uploadProductImage(
+            imageFile,
+            product?.id
+          );
+          
+          if (!uploadError && uploadedUrl) {
+            imageUrl = uploadedUrl;
+          } else {
+            console.warn('Image upload failed, continuing without image');
+          }
+        } catch (uploadErr) {
+          console.warn('Image upload error, continuing without image:', uploadErr);
+        }
       }
 
       const productData = {

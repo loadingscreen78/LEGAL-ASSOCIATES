@@ -5,8 +5,9 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
+import { useProducts } from '@/hooks/useProducts';
 
-const bookData = [
+const fallbackBookData = [
   {
     id: 'book-1',
     title: "Indian Penal Code - Complete Commentary",
@@ -80,6 +81,30 @@ const Books = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [sortBy, setSortBy] = useState('name');
   const { addToCart } = useCart();
+  const { products, loading } = useProducts();
+
+  console.log('📚 Books Page - Products from hook:', products.length, products);
+  console.log('📚 Books Page - Loading:', loading);
+
+  // Use Firebase products (books only) if available, otherwise use fallback
+  const booksFromFirebase = products.filter(p => p.category === 'books');
+  console.log('📚 Books filtered from Firebase:', booksFromFirebase.length);
+
+  const bookData = booksFromFirebase.length > 0 
+    ? booksFromFirebase.map(p => ({
+        id: p.id,
+        title: p.title,
+        category: p.author || 'Books',
+        price: p.price,
+        originalPrice: p.price * 1.2,
+        image: p.image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
+        description: p.description || '',
+        rating: 4.5,
+        inStock: p.stock > 0
+      }))
+    : fallbackBookData;
+
+  console.log('📚 Books Page - Final bookData:', bookData.length, 'items');
 
   const categories = ['All', 'Criminal Law', 'Civil Law', 'Constitutional Law', 'Odisha Law', 'Family Law', 'Tax Law'];
   const sortOptions = [

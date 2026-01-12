@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { 
+  collection, 
+  getDocs, 
+  onSnapshot
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Transaction {
   id: string;
   order_id: string;
+  user_id?: string;
   transaction_id?: string;
   amount: number;
-  status: 'pending' | 'success' | 'failed' | 'cancelled';
+  status: 'pending' | 'success' | 'failed' | 'cancelled' | 'completed';
   payment_method?: string;
   gateway_response?: Record<string, any>;
   created_at: string;
@@ -27,49 +32,49 @@ export interface Transaction {
 }
 
 export const useTransactions = () => {
-  const { user, isAdmin } = useAuth();
-  const { toast } = useToast();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchTransactions = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('📊 No user, skipping fetch');
+      setTransactions([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
-      let query = supabase
-        .from('transactions')
-        .select(`
-          *,
-          orders (
-            id,
-            user_id,
-            order_number,
-            total_amount,
-            shipping_address,
-            profiles (
-              full_name
-            )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      // Regular users only see their own transactions
-      if (!isAdmin) {
-        query = query.eq('orders.user_id', user.id);
-      }
-
-      const { data, error } = await query;
+      console.log('📊 Fetching transactions... isAdmin:', isAdmin, 'user:', user.uid);
       
-      if (error) throw error;
-      setTransactions((data || []) as Transaction[]);
-    } catch (error: any) {
-      console.error('Error fetching transactions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch transactions. Please try again.",
-        variant: "destructive",
+      // Get all transactions (we'll filter client-side if needed)
+      const querySnapshot = await getDocs(collection(db, 'transactions'));
+      console.log('📊 Found transactions:', querySnapshot.size);
+      
+      let transactionsData = querySnapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      })) as Transaction[];
+      
+      // Filter for non-admin users
+      if (!isAdmin) {
+        transactionsData = transactionsData.filter(t => t.user_id === user.uid);
+        console.log('📊 Filtered transactions for user:', transactionsData.length);
+      }
+      
+      // Sort by created_at descending
+      transactionsData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
       });
+      
+      console.log('📊 Final transactions data:', transactionsData);
+      setTransactions(transactionsData);
+    } catch (error: any) {
+      console.error('❌ Error fetching transactions:', error);
+      setTransactions([]);
     } finally {
       setLoading(false);
     }
@@ -77,24 +82,25 @@ export const useTransactions = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    if (!user) return;
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
     
-    fetchTransactions();
+    if (user) {
+      fetchTransactions();
 
-    const channel = supabase
-      .channel('transactions-changes')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'transactions' },
-        () => {
-          fetchTransactions(); // Refetch when transactions change
-        }
-      )
-      .subscribe();
+      // Simple subscription without compound index
+      const unsubscribe = onSnapshot(collection(db, 'transactions'), () => {
+        fetchTransactions();
+      });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, isAdmin]);
+      return () => unsubscribe();
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [user, isAdmin, authLoading]);
 
   const getRevenueStats = () => {
     if (!transactions.length) return { total: 0, thisMonth: 0, thisWeek: 0 };

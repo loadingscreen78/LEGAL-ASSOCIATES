@@ -5,8 +5,10 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
+import { useProducts } from '@/hooks/useProducts';
 
-const shopData = [
+// Fallback data in case Firebase is empty
+const fallbackData = [
   {
     id: 'shop-1',
     title: "Complete Criminal Law Set",
@@ -108,8 +110,39 @@ const Shop = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [showOnlyInStock, setShowOnlyInStock] = useState(false);
   const { addToCart } = useCart();
+  const { products, loading } = useProducts();
 
-  const categories = ['All', 'Bundle', 'Core', 'Specialty', 'Starter', 'Professional'];
+  console.log('🛍️ Shop Page - Products from hook:', products.length, products);
+  console.log('🛍️ Shop Page - Loading:', loading);
+
+  // Use Firebase products if available, otherwise use fallback
+  const shopData = products.length > 0 ? products.map(p => {
+    console.log('🛍️ Mapping product:', {
+      id: p.id,
+      title: p.title,
+      category: p.category,
+      image_url: p.image_url,
+      has_image: !!p.image_url
+    });
+    return {
+      id: p.id,
+      title: p.title,
+      category: p.category || 'books',
+      price: p.price,
+      originalPrice: p.price * 1.3, // Calculate discount
+      image: p.image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
+      description: p.description || '',
+      rating: 4.5,
+      inStock: p.stock > 0,
+      bestseller: false,
+      featured: false,
+      newArrival: false
+    };
+  }) : fallbackData;
+
+  console.log('🛍️ Shop Page - Final shopData:', shopData.length, 'items');
+
+  const categories = ['All', 'books', 'journals', 'catalogs'];
   const sortOptions = [
     { value: 'featured', label: 'Featured' },
     { value: 'name', label: 'Name' },

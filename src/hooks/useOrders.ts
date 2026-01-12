@@ -1,38 +1,62 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Order, OrderItem, Transaction } from '@/types/database';
-import { useAuth } from './useAuth';
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  doc,
+  onSnapshot,
+  writeBatch
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Order, Transaction } from '@/types/database';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useOrders = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const fetchOrders = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('📦 No user, skipping fetch');
+      setOrders([]);
+      setLoading(false);
+      return;
+    }
 
     setLoading(true);
     try {
-      let query = supabase
-        .from('orders')
-        .select(`
-          *,
-          order_items(*),
-          transactions(*)
-        `)
-        .order('created_at', { ascending: false });
+      console.log('📦 Fetching orders... isAdmin:', isAdmin, 'user:', user.uid);
+      let ordersData: Order[] = [];
 
-      // If not admin, only fetch user's orders
+      // Get all orders (we'll filter client-side if needed)
+      const querySnapshot = await getDocs(collection(db, 'orders'));
+      console.log('📦 Found orders:', querySnapshot.size);
+      
+      ordersData = querySnapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      })) as Order[];
+      
+      // Filter for non-admin users
       if (!isAdmin) {
-        query = query.eq('user_id', user.id);
+        ordersData = ordersData.filter(order => order.user_id === user.uid);
+        console.log('📦 Filtered orders for user:', ordersData.length);
       }
+      
+      // Sort by created_at descending
+      ordersData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      });
 
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setOrders(data || []);
+      console.log('📦 Final orders data:', ordersData);
+      setOrders(ordersData);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error('❌ Error fetching orders:', error);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -58,37 +82,64 @@ export const useOrders = () => {
   }) => {
     if (!user) throw new Error('User not authenticated');
 
-    const { data, error } = await supabase.rpc('create_order_with_items', {
-      p_user_id: user.id,
-      p_total_amount: orderData.total_amount,
-      p_shipping_address: orderData.shipping_address,
-      p_payment_method: orderData.payment_method,
-      p_items: orderData.items,
-    });
+    try {
+      const batch = writeBatch(db);
+      
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}`;
+      
+      // Create order
+      const orderRef = doc(collection(db, 'orders'));
+      batch.set(orderRef, {
+        user_id: user.uid,
+        order_number: orderNumber,
+        status: 'pending',
+        total_amount: orderData.total_amount,
+        shipping_address: orderData.shipping_address,
+        payment_status: 'pending',
+        payment_method: orderData.payment_method,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-    if (error) throw error;
+      // Create order items
+      orderData.items.forEach((item) => {
+        const itemRef = doc(collection(db, 'order_items'));
+        batch.set(itemRef, {
+          order_id: orderRef.id,
+          ...item,
+          created_at: new Date().toISOString(),
+        });
+      });
 
-    // Refresh orders
-    await fetchOrders();
+      await batch.commit();
 
-    return data;
+      // Refresh orders
+      await fetchOrders();
+
+      return { id: orderRef.id, order_number: orderNumber };
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   };
 
   const updateOrderStatus = async (orderId: string, status: Order['status']) => {
     if (!isAdmin) throw new Error('Admin access required');
 
-    const { error } = await supabase
-      .from('orders')
-      .update({ 
+    try {
+      const orderRef = doc(db, 'orders', orderId);
+      await updateDoc(orderRef, { 
         status,
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', orderId);
+      });
 
-    if (error) throw error;
-
-    // Refresh orders
-    await fetchOrders();
+      // Refresh orders
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      throw error;
+    }
   };
 
   const createTransaction = async (transactionData: {
@@ -99,34 +150,51 @@ export const useOrders = () => {
     payment_method?: string;
     gateway_response?: Record<string, any>;
   }) => {
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert(transactionData)
-      .select()
-      .single();
+    try {
+      // Create transaction
+      const transactionRef = await addDoc(collection(db, 'transactions'), {
+        ...transactionData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
 
-    if (error) throw error;
-
-    // Update order payment status
-    await supabase
-      .from('orders')
-      .update({ 
+      // Update order payment status
+      const orderRef = doc(db, 'orders', transactionData.order_id);
+      await updateDoc(orderRef, { 
         payment_status: transactionData.status === 'success' ? 'paid' : 'failed',
         updated_at: new Date().toISOString(),
-      })
-      .eq('id', transactionData.order_id);
+      });
 
-    // Refresh orders
-    await fetchOrders();
+      // Refresh orders
+      await fetchOrders();
 
-    return data;
+      return { id: transactionRef.id, ...transactionData };
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      throw error;
+    }
   };
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) {
+      return;
+    }
+    
     if (user) {
       fetchOrders();
+
+      // Simple subscription without compound index
+      const unsubscribe = onSnapshot(collection(db, 'orders'), () => {
+        fetchOrders();
+      });
+
+      return () => unsubscribe();
+    } else {
+      setOrders([]);
+      setLoading(false);
     }
-  }, [user, isAdmin]);
+  }, [user, isAdmin, authLoading]);
 
   return {
     orders,
