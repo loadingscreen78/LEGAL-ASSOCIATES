@@ -74,10 +74,10 @@ export function AdminSidebar() {
   };
 
   return (
-    <Sidebar className={!open ? "w-14" : "w-60"} collapsible="icon">
+    <Sidebar className={!open ? "w-14" : "w-60"} collapsible="icon" style={{ background: '#FFFFFF', borderRight: '1px solid #E2E8F0' }}>
       <SidebarContent>
         {/* Header with Logo */}
-        <div className="p-4 border-b border-sidebar-border">
+        <div className="p-4 border-b" style={{ borderColor: '#E2E8F0' }}>
           {!open ? (
             <div className="flex justify-center">
               <SidebarTrigger />
@@ -92,7 +92,7 @@ export function AdminSidebar() {
 
         {/* Navigation Menu */}
         <SidebarGroup>
-          {open && <SidebarGroupLabel>Navigation</SidebarGroupLabel>}
+          {open && <SidebarGroupLabel style={{ color: '#64748B', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Navigation</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
@@ -102,12 +102,17 @@ export function AdminSidebar() {
                       to={item.url} 
                       end={item.url === '/admin-dashboard'}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
+                        `flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 ${
                           isActive 
-                            ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' 
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                            ? 'font-semibold' 
+                            : 'hover:scale-[1.02]'
                         }`
                       }
+                      style={({ isActive }) => ({
+                        background: isActive ? '#F8FAFC' : 'transparent',
+                        color: isActive ? '#2563EB' : '#64748B',
+                        border: isActive ? '1px solid #DBEAFE' : '1px solid transparent',
+                      })}
                     >
                       <item.icon className="h-5 w-5 flex-shrink-0" />
                       {open && <span>{item.title}</span>}
@@ -120,14 +125,15 @@ export function AdminSidebar() {
         </SidebarGroup>
 
         {/* User Section */}
-        <div className="mt-auto border-t border-sidebar-border p-4">
+        <div className="mt-auto border-t p-4" style={{ borderColor: '#E2E8F0' }}>
           {!open ? (
             <div className="flex flex-col gap-2">
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full p-2 h-auto"
+                className="w-full p-2 h-auto hover:bg-slate-100"
                 title="User Profile"
+                style={{ color: '#64748B' }}
               >
                 <User className="h-4 w-4" />
               </Button>
@@ -135,23 +141,24 @@ export function AdminSidebar() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="w-full p-2 h-auto text-destructive hover:text-destructive"
+                className="w-full p-2 h-auto hover:bg-red-50"
                 title="Sign Out"
+                style={{ color: '#DC2626' }}
               >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
-              <div className="flex items-center gap-3 px-3 py-2 bg-sidebar-accent/30 rounded-md">
-                <div className="flex items-center justify-center w-8 h-8 bg-sidebar-primary text-sidebar-primary-foreground rounded-full text-sm font-semibold">
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold" style={{ background: 'linear-gradient(135deg, #2563EB, #1D4ED8)', color: '#FFFFFF' }}>
                   {user?.email?.charAt(0).toUpperCase() || 'A'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  <p className="text-sm font-semibold truncate" style={{ color: '#1E293B' }}>
                     Admin
                   </p>
-                  <p className="text-xs text-sidebar-foreground/70 truncate">
+                  <p className="text-xs truncate" style={{ color: '#64748B' }}>
                     {user?.email}
                   </p>
                 </div>
@@ -161,7 +168,8 @@ export function AdminSidebar() {
                 variant="ghost"
                 size="sm"
                 onClick={handleSignOut}
-                className="w-full justify-start gap-3 text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full justify-start gap-3 hover:bg-red-50 transition-all duration-300"
+                style={{ color: '#DC2626' }}
               >
                 <LogOut className="h-4 w-4" />
                 Sign Out

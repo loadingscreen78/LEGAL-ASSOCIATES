@@ -1,81 +1,127 @@
+import { Link } from 'react-router-dom';
+import { Phone, Mail, MapPin, Clock, ArrowRight, Scale, BookOpen, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 
-import { Phone, Mail, MapPin } from 'lucide-react';
+const quickLinks = [
+  { label: 'Law Journals', href: '/journals', icon: '📘' },
+  { label: 'Legal Books', href: '/books', icon: '📚' },
+  { label: 'Court Publications', href: '/shop', icon: '🏛️' },
+  { label: 'Bare Acts', href: '/shop', icon: '📜' },
+];
+
+const socialLinks = [
+  { icon: Facebook, href: '#', label: 'Facebook' },
+  { icon: Twitter, href: '#', label: 'Twitter' },
+  { icon: Linkedin, href: '#', label: 'LinkedIn' },
+  { icon: Instagram, href: '#', label: 'Instagram' },
+];
 
 export const Footer = () => {
   return (
-    <footer className="bg-card border-t border-border py-12">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-accent font-serif text-xl mb-6">Contact Us</h3>
-            <div className="space-y-4 text-muted-foreground">
-              <div className="flex items-start space-x-3">
-                <MapPin className="text-accent mt-1 flex-shrink-0" size={18} />
+    <footer className="relative overflow-hidden" style={{ background: '#101820' }}>
+      {/* Top Border */}
+      <div className="h-1" style={{ background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
+      
+      <div className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: '#D4AF37' }}>
+                  <Scale className="w-6 h-6" style={{ color: '#2D3E50' }} />
+                </div>
                 <div>
-                  <p className="font-semibold text-foreground">LEGAL ASSOCIATES</p>
-                  <p className="text-sm text-muted-foreground">(Law Book Sellers, Publishers & Suppliers)</p>
-                  <p>High Court Road, Cuttack - 753002 (Odisha)</p>
+                  <h3 className="font-serif font-bold text-xl" style={{ color: '#FFFFFF' }}>Legal Associates</h3>
+                  <p className="text-xs" style={{ color: '#D4AF37' }}>Since 1980</p>
                 </div>
               </div>
-              
-              <div className="flex items-center space-x-3">
-                <Phone className="text-accent flex-shrink-0" size={18} />
-                <div>
-                  <p>0671-2910130 (Office)</p>
-                  <p>94370-19131 (Mobile)</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-3">
-                <Mail className="text-accent flex-shrink-0" size={18} />
-                <div>
-                  <p>akshaya.ocr@gmail.com</p>
-                  <p>legalassociates.ocr@gmail.com</p>
-                </div>
-              </div>
-              
-              <div className="border-t border-border pt-4 mt-6">
-                <p className="text-sm">🕒 Mon-Sat: 10:00 AM - 8:00 PM</p>
+              <p className="mb-6 leading-relaxed" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                Your trusted partner in legal publishing. Quality, accuracy, and reliability in every publication.
+              </p>
+              <div className="flex gap-3">
+                {socialLinks.map((social, index) => {
+                  const Icon = social.icon;
+                  return (
+                    <a key={index} href={social.href} aria-label={social.label} className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110" style={{ background: 'rgba(255, 255, 255, 0.1)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                      <Icon className="w-5 h-5" style={{ color: '#FFFFFF' }} />
+                    </a>
+                  );
+                })}
               </div>
             </div>
-          </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-accent font-serif text-xl mb-6">Quick Links</h3>
-            <div className="space-y-3 text-muted-foreground">
-              <p className="flex items-center space-x-2 hover:text-accent transition-colors cursor-pointer">
-                <span>📘</span><span>Law Journals</span>
-              </p>
-              <p className="flex items-center space-x-2 hover:text-accent transition-colors cursor-pointer">
-                <span>📚</span><span>Legal Books</span>
-              </p>
-              <p className="flex items-center space-x-2 hover:text-accent transition-colors cursor-pointer">
-                <span>🏛️</span><span>Court Publications</span>
-              </p>
-              <p className="flex items-center space-x-2 hover:text-accent transition-colors cursor-pointer">
-                <span>📜</span><span>Bare Acts</span>
-              </p>
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold text-lg mb-6 flex items-center gap-2" style={{ color: '#D4AF37' }}>
+                <BookOpen className="w-5 h-5" /> Quick Links
+              </h4>
+              <ul className="space-y-3">
+                {quickLinks.map((link, index) => (
+                  <li key={index}>
+                    <Link to={link.href} className="flex items-center gap-2 transition-all duration-300 hover:translate-x-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                      <span>{link.icon}</span>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
 
-          {/* Newsletter */}
-          <div>
-            <h3 className="text-accent font-serif text-xl mb-6">Stay Updated</h3>
-            <p className="text-muted-foreground mb-6">📩 Stay updated with new legal releases and publications</p>
-            <div className="flex space-x-4 text-2xl">
-              <span className="hover:scale-110 transition-transform cursor-pointer">⚖️</span>
-              <span className="hover:scale-110 transition-transform cursor-pointer">📘</span>
-              <span className="hover:scale-110 transition-transform cursor-pointer">📜</span>
-              <span className="hover:scale-110 transition-transform cursor-pointer">🧑‍⚖️</span>
+            {/* Contact Info */}
+            <div>
+              <h4 className="font-semibold text-lg mb-6 flex items-center gap-2" style={{ color: '#D4AF37' }}>
+                <Phone className="w-5 h-5" /> Contact Us
+              </h4>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 mt-1 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <div>
+                    <p className="font-semibold" style={{ color: '#FFFFFF' }}>LEGAL ASSOCIATES</p>
+                    <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>High Court Road, Cuttack - 753002, Odisha</p>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
+                    <p>0671-2910130 (Office)</p>
+                    <p>94370-19131 (Mobile)</p>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>legalassociates.ocr@gmail.com</span>
+                </li>
+              </ul>
+            </div>
+
+            {/* Hours */}
+            <div>
+              <h4 className="font-semibold text-lg mb-6 flex items-center gap-2" style={{ color: '#D4AF37' }}>
+                <Clock className="w-5 h-5" /> Working Hours
+              </h4>
+              <div className="p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Monday - Saturday</span>
+                  <span className="font-semibold" style={{ color: '#FFFFFF' }}>10 AM - 8 PM</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Sunday</span>
+                  <span className="font-semibold" style={{ color: '#D4AF37' }}>Closed</span>
+                </div>
+              </div>
+              <Link to="/shop" className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-full font-medium transition-all duration-300 hover:scale-105" style={{ background: '#D4AF37', color: '#2D3E50' }}>
+                Visit Shop <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="border-t border-border mt-8 pt-8 text-center text-muted-foreground">
-          <p>&copy; 2024 Legal Associates. All Rights Reserved.</p>
-          <p className="mt-2 text-accent font-serif">Empowering Legal Minds Since Decades</p>
+      {/* Copyright */}
+      <div className="py-6" style={{ background: 'rgba(0, 0, 0, 0.3)', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>© 2024 Legal Associates. All Rights Reserved.</p>
+          <p className="text-sm mt-1" style={{ color: '#D4AF37' }}>Empowering Legal Minds Since Decades</p>
         </div>
       </div>
     </footer>

@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  getDocs, 
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export interface Transaction {
   id: string;
@@ -46,32 +42,24 @@ export const useTransactions = () => {
     
     setLoading(true);
     try {
-      console.log('📊 Fetching transactions... isAdmin:', isAdmin, 'user:', user.uid);
+      console.log('📊 Fetching transactions... isAdmin:', isAdmin, 'user:', user.id);
       
-      // Get all transactions (we'll filter client-side if needed)
-      const querySnapshot = await getDocs(collection(db, 'transactions'));
-      console.log('📊 Found transactions:', querySnapshot.size);
-      
-      let transactionsData = querySnapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      })) as Transaction[];
-      
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       // Filter for non-admin users
       if (!isAdmin) {
-        transactionsData = transactionsData.filter(t => t.user_id === user.uid);
-        console.log('📊 Filtered transactions for user:', transactionsData.length);
+        query = query.eq('user_id', user.id);
       }
-      
-      // Sort by created_at descending
-      transactionsData.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-      
-      console.log('📊 Final transactions data:', transactionsData);
-      setTransactions(transactionsData);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log('📊 Found transactions:', data?.length || 0);
+      setTransactions((data as Transaction[]) || []);
     } catch (error: any) {
       console.error('❌ Error fetching transactions:', error);
       setTransactions([]);
@@ -90,12 +78,26 @@ export const useTransactions = () => {
     if (user) {
       fetchTransactions();
 
-      // Simple subscription without compound index
-      const unsubscribe = onSnapshot(collection(db, 'transactions'), () => {
-        fetchTransactions();
-      });
+      // Subscribe to real-time changes
+      const channel = supabase
+        .channel('transactions-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+          },
+          (payload: RealtimePostgresChangesPayload<Transaction>) => {
+            console.log('🔄 Transaction change detected:', payload);
+            fetchTransactions();
+          }
+        )
+        .subscribe();
 
-      return () => unsubscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } else {
       setTransactions([]);
       setLoading(false);

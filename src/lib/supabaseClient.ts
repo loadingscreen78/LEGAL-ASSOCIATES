@@ -1,12 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Supabase configuration for image storage
-const SUPABASE_URL = 'https://wvptkawpgmccgsqjkwls.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRrYXdwZ21jY2dzcWprd2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NTg4MDcsImV4cCI6MjA3OTEzNDgwN30.3oD6M9ACBus9Ls2dvpYpdmoRM5F5yZhZD00BrbnqIdY';
+// Supabase configuration - single source for Auth, Database, and Storage
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-console.log('✅ Supabase client initialized for image storage');
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Missing Supabase environment variables');
+}
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log('✅ Supabase client initialized for Auth, Database, and Storage');
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});
 
 /**
  * Upload a product image to Supabase Storage
@@ -20,7 +30,7 @@ export async function uploadProductImage(file: File): Promise<string> {
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const filePath = `${fileName}`; // Remove 'products/' prefix since bucket is already 'products'
+    const filePath = `${fileName}`;
 
     console.log('📁 Upload path:', filePath);
 
@@ -35,8 +45,6 @@ export async function uploadProductImage(file: File): Promise<string> {
 
     if (uploadError) {
       console.error('❌ Supabase upload error:', uploadError);
-      console.error('💡 Fix: Go to Supabase Dashboard → Storage → products bucket');
-      console.error('💡 Either: 1) Disable RLS, OR 2) Add policies (see FIX_STORAGE_POLICY_NOW.md)');
       throw new Error(`Failed to upload image: ${uploadError.message}`);
     }
 
@@ -72,7 +80,7 @@ export async function deleteProductImage(imageUrl: string): Promise<void> {
       return;
     }
     
-    const filePath = `products/${urlParts[1]}`;
+    const filePath = urlParts[1];
 
     const { error } = await supabase.storage
       .from('products')

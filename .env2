@@ -1,0 +1,62 @@
+# ============================================
+# VERCEL DEPLOYMENT - ENVIRONMENT VARIABLES
+# ============================================
+# Copy these variables to Vercel Dashboard:
+# Project Settings → Environment Variables
+# Set for: Production, Preview, and Development
+# ============================================
+
+# Supabase Configuration (Auth, Database, and Storage)
+VITE_SUPABASE_URL=https://wvptkawpgmccgsqjkwls.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRrYXdwZ21jY2dzcWprd2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NTg4MDcsImV4cCI6MjA3OTEzNDgwN30.3oD6M9ACBus9Ls2dvpYpdmoRM5F5yZhZD00BrbnqIdY
+
+# ============================================
+# VERCEL DEPLOYMENT STEPS
+# ============================================
+# 1. Push your code to GitHub
+# 2. Go to Vercel Dashboard (vercel.com)
+# 3. Click "Add New Project"
+# 4. Import your GitHub repository
+# 5. Go to "Environment Variables" section
+# 6. Add the 2 variables above:
+#    - Variable name: VITE_SUPABASE_URL
+#    - Value: https://wvptkawpgmccgsqjkwls.supabase.co
+#    - Environments: Production, Preview, Development
+#    
+#    - Variable name: VITE_SUPABASE_ANON_KEY
+#    - Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+#    - Environments: Production, Preview, Development
+# 7. Click "Deploy"
+# 8. Wait for deployment to complete
+# 9. Visit your deployed site
+# 10. Go to /supabase-test to verify everything works
+# ============================================
+
+# ============================================
+# IMPORTANT: SUPABASE SETUP REQUIRED
+# ============================================
+# Before your app works, you MUST:
+# 
+# 1. Run Database Schema:
+#    - Go to: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/sql
+#    - Click "New Query"
+#    - Copy entire content from SUPABASE_DATABASE_SCHEMA.sql
+#    - Paste and click "Run"
+#
+# 2. Create Storage Bucket:
+#    - Go to: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/storage/buckets
+#    - Click "New bucket"
+#    - Name: products
+#    - Make it Public
+#    - Click "Create"
+#
+# 3. Update Supabase Site URL:
+#    - Go to: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/auth/url-configuration
+#    - Add your Vercel domain (e.g., your-app.vercel.app)
+#    - Click "Save"
+#
+# 4. Enable Realtime:
+#    - Go to: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/database/replication
+#    - Enable replication for: products, orders, transactions
+#    - Click "Save"
+# ============================================

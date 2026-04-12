@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  doc,
-  onSnapshot,
-  writeBatch
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 import { Order, Transaction } from '@/types/database';
 import { useAuth } from '@/contexts/AuthContext';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export const useOrders = () => {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -27,33 +19,24 @@ export const useOrders = () => {
 
     setLoading(true);
     try {
-      console.log('📦 Fetching orders... isAdmin:', isAdmin, 'user:', user.uid);
-      let ordersData: Order[] = [];
+      console.log('📦 Fetching orders... isAdmin:', isAdmin, 'user:', user.id);
+      
+      let query = supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      // Get all orders (we'll filter client-side if needed)
-      const querySnapshot = await getDocs(collection(db, 'orders'));
-      console.log('📦 Found orders:', querySnapshot.size);
-      
-      ordersData = querySnapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data()
-      })) as Order[];
-      
       // Filter for non-admin users
       if (!isAdmin) {
-        ordersData = ordersData.filter(order => order.user_id === user.uid);
-        console.log('📦 Filtered orders for user:', ordersData.length);
+        query = query.eq('user_id', user.id);
       }
-      
-      // Sort by created_at descending
-      ordersData.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
 
-      console.log('📦 Final orders data:', ordersData);
-      setOrders(ordersData);
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log('📦 Found orders:', data?.length || 0);
+      setOrders((data as Order[]) || []);
     } catch (error) {
       console.error('❌ Error fetching orders:', error);
       setOrders([]);
@@ -83,41 +66,45 @@ export const useOrders = () => {
     if (!user) throw new Error('User not authenticated');
 
     try {
-      const batch = writeBatch(db);
-      
       // Generate order number
       const orderNumber = `ORD-${Date.now()}`;
       
       // Create order
-      const orderRef = doc(collection(db, 'orders'));
-      batch.set(orderRef, {
-        user_id: user.uid,
-        order_number: orderNumber,
-        status: 'pending',
-        total_amount: orderData.total_amount,
-        shipping_address: orderData.shipping_address,
-        payment_status: 'pending',
-        payment_method: orderData.payment_method,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          order_number: orderNumber,
+          status: 'pending',
+          total_amount: orderData.total_amount,
+          shipping_address: orderData.shipping_address,
+          payment_status: 'pending',
+          payment_method: orderData.payment_method,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
 
       // Create order items
-      orderData.items.forEach((item) => {
-        const itemRef = doc(collection(db, 'order_items'));
-        batch.set(itemRef, {
-          order_id: orderRef.id,
-          ...item,
-          created_at: new Date().toISOString(),
-        });
-      });
+      const orderItems = orderData.items.map(item => ({
+        order_id: orderData.id,
+        ...item,
+        created_at: new Date().toISOString(),
+      }));
 
-      await batch.commit();
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
 
       // Refresh orders
       await fetchOrders();
 
-      return { id: orderRef.id, order_number: orderNumber };
+      return { id: orderData.id, order_number: orderNumber };
     } catch (error) {
       console.error('Error creating order:', error);
       throw error;
@@ -128,16 +115,46 @@ export const useOrders = () => {
     if (!isAdmin) throw new Error('Admin access required');
 
     try {
-      const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, { 
-        status,
-        updated_at: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
 
       // Refresh orders
       await fetchOrders();
     } catch (error) {
       console.error('Error updating order status:', error);
+      throw error;
+    }
+  };
+
+  const updateEstimatedDelivery = async (orderId: string, estimatedDays: number) => {
+    if (!isAdmin) throw new Error('Admin access required');
+
+    try {
+      const estimatedDeliveryDate = new Date();
+      estimatedDeliveryDate.setDate(estimatedDeliveryDate.getDate() + estimatedDays);
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          estimated_days: estimatedDays,
+          estimated_delivery_date: estimatedDeliveryDate.toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Refresh orders
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error updating estimated delivery:', error);
       throw error;
     }
   };
@@ -152,23 +169,33 @@ export const useOrders = () => {
   }) => {
     try {
       // Create transaction
-      const transactionRef = await addDoc(collection(db, 'transactions'), {
-        ...transactionData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      const { data: transaction, error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          ...transactionData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (transactionError) throw transactionError;
 
       // Update order payment status
-      const orderRef = doc(db, 'orders', transactionData.order_id);
-      await updateDoc(orderRef, { 
-        payment_status: transactionData.status === 'success' ? 'paid' : 'failed',
-        updated_at: new Date().toISOString(),
-      });
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ 
+          payment_status: transactionData.status === 'success' ? 'paid' : 'failed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', transactionData.order_id);
+
+      if (orderError) throw orderError;
 
       // Refresh orders
       await fetchOrders();
 
-      return { id: transactionRef.id, ...transactionData };
+      return transaction;
     } catch (error) {
       console.error('Error creating transaction:', error);
       throw error;
@@ -184,12 +211,26 @@ export const useOrders = () => {
     if (user) {
       fetchOrders();
 
-      // Simple subscription without compound index
-      const unsubscribe = onSnapshot(collection(db, 'orders'), () => {
-        fetchOrders();
-      });
+      // Subscribe to real-time changes
+      const channel = supabase
+        .channel('orders-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'orders',
+          },
+          (payload: RealtimePostgresChangesPayload<Order>) => {
+            console.log('🔄 Order change detected:', payload);
+            fetchOrders();
+          }
+        )
+        .subscribe();
 
-      return () => unsubscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
     } else {
       setOrders([]);
       setLoading(false);
@@ -201,6 +242,7 @@ export const useOrders = () => {
     loading,
     createOrder,
     updateOrderStatus,
+    updateEstimatedDelivery,
     createTransaction,
     refetch: fetchOrders,
   };

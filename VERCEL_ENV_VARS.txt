@@ -1,0 +1,36 @@
+================================================
+VERCEL ENVIRONMENT VARIABLES
+================================================
+
+Copy these 2 variables to Vercel Dashboard:
+Project Settings → Environment Variables
+
+================================================
+
+Variable 1:
+-----------
+Name: VITE_SUPABASE_URL
+Value: https://wvptkawpgmccgsqjkwls.supabase.co
+Environments: Production, Preview, Development
+
+Variable 2:
+-----------
+Name: VITE_SUPABASE_ANON_KEY
+Value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind2cHRrYXdwZ21jY2dzcWprd2xzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1NTg4MDcsImV4cCI6MjA3OTEzNDgwN30.3oD6M9ACBus9Ls2dvpYpdmoRM5F5yZhZD00BrbnqIdY
+Environments: Production, Preview, Development
+
+================================================
+
+IMPORTANT: Before deployment works, you MUST:
+
+1. Run database schema in Supabase SQL Editor
+   File: SUPABASE_DATABASE_SCHEMA.sql
+   Link: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/sql
+
+2. Create 'products' storage bucket (make it public)
+   Link: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/storage/buckets
+
+3. Add your Vercel domain to Supabase URL Configuration
+   Link: https://supabase.com/dashboard/project/wvptkawpgmccgsqjkwls/auth/url-configuration
+
+================================================

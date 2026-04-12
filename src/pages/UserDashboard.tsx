@@ -1,47 +1,27 @@
 import { useState, useEffect } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useNavigate } from 'react-router-dom';
-import { User, Package, CreditCard, Edit, Save, Eye, Download, MapPin, Phone, Mail } from 'lucide-react';
+import { User, Package, CreditCard, Edit, Save, MapPin, Phone, Mail, LogOut, ShoppingBag, Clock, CheckCircle, Truck, XCircle, AlertCircle } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user, profile, signOut, updateProfile, loading: authLoading } = useAuth();
   const { orders, loading: ordersLoading } = useOrders();
   const { transactions, loading: transactionsLoading } = useTransactions();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    full_name: profile?.full_name || '',
-    phone: profile?.phone || '',
-    address: profile?.address || '',
-    pincode: profile?.pincode || '',
-  });
+  const [profileData, setProfileData] = useState({ full_name: '', phone: '', address: '', pincode: '' });
 
   useEffect(() => {
-    // Only redirect if auth is loaded and user is not present
-    if (!authLoading && !user) {
-      navigate('/login');
-    }
+    if (!authLoading && !user) navigate('/login');
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (profile) {
-      setProfileData({
-        full_name: profile.full_name || '',
-        phone: profile.phone || '',
-        address: profile.address || '',
-        pincode: profile.pincode || '',
-      });
-    }
+    if (profile) setProfileData({ full_name: profile.full_name || '', phone: profile.phone || '', address: profile.address || '', pincode: profile.pincode || '' });
   }, [profile]);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
@@ -49,10 +29,8 @@ const UserDashboard = () => {
     try {
       await updateProfile(profileData);
       setIsEditing(false);
-      alert('Profile updated successfully!');
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('Failed to update profile');
     }
   };
 
@@ -61,25 +39,34 @@ const UserDashboard = () => {
     navigate('/');
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-500';
-      case 'confirmed': return 'bg-blue-500';
-      case 'processing': return 'bg-purple-500';
-      case 'shipped': return 'bg-orange-500';
-      case 'delivered': return 'bg-green-500';
-      case 'cancelled': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case 'pending': return <Clock className="w-5 h-5" />;
+      case 'confirmed': case 'processing': return <AlertCircle className="w-5 h-5" />;
+      case 'shipped': return <Truck className="w-5 h-5" />;
+      case 'delivered': return <CheckCircle className="w-5 h-5" />;
+      case 'cancelled': return <XCircle className="w-5 h-5" />;
+      default: return <Package className="w-5 h-5" />;
     }
   };
 
-  // Show loading while checking auth
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return '#F59E0B';
+      case 'confirmed': case 'processing': return '#3B82F6';
+      case 'shipped': return '#8B5CF6';
+      case 'delivered': return '#10B981';
+      case 'cancelled': return '#EF4444';
+      default: return '#6B7280';
+    }
+  };
+
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#F8F9FA' }}>
         <div className="text-center">
-          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 animate-spin" style={{ border: '4px solid #D4AF37', borderTopColor: 'transparent' }} />
+          <p style={{ color: '#666666' }}>Loading...</p>
         </div>
       </div>
     );
@@ -87,280 +74,212 @@ const UserDashboard = () => {
 
   if (!user) return null;
 
+  const tabs = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'orders', label: 'Orders', icon: Package },
+    { id: 'payments', label: 'Payments', icon: CreditCard },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen" style={{ background: '#F8F9FA' }}>
       <Navigation />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Header */}
-          <div className="mb-8 animate-fade-in">
-            <h1 className="text-4xl font-serif font-bold text-primary mb-2">
-              My Dashboard
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Welcome back, <span className="font-semibold text-foreground">{profile?.full_name || user.email?.split('@')[0]}</span>
-            </p>
+          <div className="rounded-3xl p-8 mb-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #2D3E50 0%, #101820 100%)' }}>
+            <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-bold" style={{ background: '#D4AF37', color: '#2D3E50' }}>
+                  {(profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
+                </div>
+                <div>
+                  <h1 className="text-2xl md:text-3xl font-serif font-bold" style={{ color: '#FFFFFF' }}>
+                    {profile?.full_name || 'Welcome'}
+                  </h1>
+                  <p className="flex items-center gap-2" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                    <Mail className="w-4 h-4" /> {user.email}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleSignOut} className="flex items-center gap-2 px-5 py-2.5 rounded-full font-medium transition-all duration-300 hover:scale-105" style={{ background: 'rgba(255, 255, 255, 0.1)', color: '#FFFFFF', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
+                <LogOut className="w-4 h-4" /> Sign Out
+              </button>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {[
+              { label: 'Total Orders', value: orders.length, icon: ShoppingBag, color: '#3B82F6' },
+              { label: 'Pending', value: orders.filter(o => o.status === 'pending').length, icon: Clock, color: '#F59E0B' },
+              { label: 'Delivered', value: orders.filter(o => o.status === 'delivered').length, icon: CheckCircle, color: '#10B981' },
+              { label: 'Transactions', value: transactions.length, icon: CreditCard, color: '#8B5CF6' },
+            ].map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div key={index} className="p-5 rounded-2xl transition-all duration-300 hover:scale-105" style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${stat.color}15` }}>
+                      <Icon className="w-5 h-5" style={{ color: stat.color }} />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold" style={{ color: '#2D3E50' }}>{stat.value}</div>
+                  <div className="text-sm" style={{ color: '#666666' }}>{stat.label}</div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Tabs */}
-          <Tabs defaultValue="profile" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                <span>Profile</span>
-              </TabsTrigger>
-              <TabsTrigger value="orders" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                <span>Orders</span>
-              </TabsTrigger>
-              <TabsTrigger value="payments" className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span>Payments</span>
-              </TabsTrigger>
-            </TabsList>
+          <div className="flex gap-2 mb-6 p-1.5 rounded-2xl" style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium transition-all duration-300" style={{ background: activeTab === tab.id ? '#2D3E50' : 'transparent', color: activeTab === tab.id ? '#FFFFFF' : '#666666' }}>
+                  <Icon className="w-4 h-4" /> {tab.label}
+                </button>
+              );
+            })}
+          </div>
 
+          {/* Tab Content */}
+          <div className="rounded-2xl p-6 md:p-8" style={{ background: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
             {/* Profile Tab */}
-            <TabsContent value="profile" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-2xl">Profile Information</CardTitle>
-                      <CardDescription>Manage your personal details</CardDescription>
-                    </div>
-                    <Button
-                      variant={isEditing ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => isEditing ? handleProfileUpdate(new Event('submit') as any) : setIsEditing(true)}
-                    >
-                      {isEditing ? (
-                        <><Save className="w-4 h-4 mr-2" /> Save</>
-                      ) : (
-                        <><Edit className="w-4 h-4 mr-2" /> Edit</>
-                      )}
-                    </Button>
+            {activeTab === 'profile' && (
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-serif font-bold" style={{ color: '#2D3E50' }}>Profile Information</h2>
+                    <p className="text-sm" style={{ color: '#666666' }}>Manage your personal details</p>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Profile Avatar */}
-                  <div className="flex items-center space-x-4">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-3xl font-bold">
-                      {(profile?.full_name?.charAt(0) || user.email?.charAt(0) || 'U').toUpperCase()}
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold">{profile?.full_name || 'User'}</h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Mail className="w-3 h-3" />
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
+                  <button onClick={() => isEditing ? handleProfileUpdate(new Event('submit') as any) : setIsEditing(true)} className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:scale-105" style={{ background: isEditing ? '#D4AF37' : '#F8F9FA', color: isEditing ? '#2D3E50' : '#666666' }}>
+                    {isEditing ? <><Save className="w-4 h-4" /> Save</> : <><Edit className="w-4 h-4" /> Edit</>}
+                  </button>
+                </div>
 
-                  {/* Profile Form */}
-                  <form onSubmit={handleProfileUpdate} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="full_name">Full Name</Label>
-                        <Input
-                          id="full_name"
-                          value={profileData.full_name}
-                          onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                          placeholder="Enter your full name"
-                          disabled={!isEditing}
-                          className={!isEditing ? 'bg-muted' : ''}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone" className="flex items-center gap-1">
-                          <Phone className="w-3 h-3" />
-                          Phone Number
-                        </Label>
-                        <Input
-                          id="phone"
-                          value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                          placeholder="Enter your phone number"
-                          disabled={!isEditing}
-                          className={!isEditing ? 'bg-muted' : ''}
-                        />
-                      </div>
+                <form onSubmit={handleProfileUpdate} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#2D3E50' }}>Full Name</label>
+                      <input type="text" value={profileData.full_name} onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })} disabled={!isEditing} className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300" style={{ background: isEditing ? '#FFFFFF' : '#F8F9FA', border: '1px solid rgba(0,0,0,0.1)', color: '#2D3E50' }} placeholder="Enter your full name" />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="address" className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        Address
-                      </Label>
-                      <Input
-                        id="address"
-                        value={profileData.address}
-                        onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                        placeholder="Enter your address"
-                        disabled={!isEditing}
-                        className={!isEditing ? 'bg-muted' : ''}
-                      />
+                    <div>
+                      <label className="block text-sm font-medium mb-2 flex items-center gap-1" style={{ color: '#2D3E50' }}><Phone className="w-4 h-4" /> Phone</label>
+                      <input type="text" value={profileData.phone} onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })} disabled={!isEditing} className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300" style={{ background: isEditing ? '#FFFFFF' : '#F8F9FA', border: '1px solid rgba(0,0,0,0.1)', color: '#2D3E50' }} placeholder="Enter phone number" />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="pincode">Pincode</Label>
-                      <Input
-                        id="pincode"
-                        value={profileData.pincode}
-                        onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })}
-                        placeholder="Enter your pincode"
-                        disabled={!isEditing}
-                        className={!isEditing ? 'bg-muted' : ''}
-                      />
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 flex items-center gap-1" style={{ color: '#2D3E50' }}><MapPin className="w-4 h-4" /> Address</label>
+                    <input type="text" value={profileData.address} onChange={(e) => setProfileData({ ...profileData, address: e.target.value })} disabled={!isEditing} className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300" style={{ background: isEditing ? '#FFFFFF' : '#F8F9FA', border: '1px solid rgba(0,0,0,0.1)', color: '#2D3E50' }} placeholder="Enter your address" />
+                  </div>
+                  <div className="w-1/2">
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#2D3E50' }}>Pincode</label>
+                    <input type="text" value={profileData.pincode} onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })} disabled={!isEditing} className="w-full px-4 py-3 rounded-xl outline-none transition-all duration-300" style={{ background: isEditing ? '#FFFFFF' : '#F8F9FA', border: '1px solid rgba(0,0,0,0.1)', color: '#2D3E50' }} placeholder="Enter pincode" />
+                  </div>
+                </form>
+              </div>
+            )}
 
             {/* Orders Tab */}
-            <TabsContent value="orders" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">My Orders</CardTitle>
-                  <CardDescription>Track and manage your orders</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {ordersLoading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Loading orders...</p>
-                    </div>
-                  ) : orders.length === 0 ? (
-                    <div className="text-center py-12">
-                      <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg font-medium mb-2">No orders yet</p>
-                      <p className="text-muted-foreground mb-4">Start shopping to see your orders here</p>
-                      <Button onClick={() => navigate('/shop')}>
-                        Browse Products
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {orders.map((order) => (
-                        <Card key={order.id} className="border-l-4" style={{ borderLeftColor: getStatusColor(order.status).replace('bg-', '#') }}>
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-semibold text-lg">Order #{order.order_number}</h3>
-                                  <Badge className={`${getStatusColor(order.status)} text-white`}>
-                                    {order.status.toUpperCase()}
-                                  </Badge>
-                                </div>
-                                <p className="text-sm text-muted-foreground">
-                                  {new Date(order.created_at).toLocaleDateString('en-US', { 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                  })}
-                                </p>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-2xl font-bold text-primary">
-                                  ₹{order.total_amount.toFixed(2)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {order.payment_status}
-                                </p>
-                              </div>
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-3 border-t">
-                              <div className="text-sm text-muted-foreground">
-                                <p>Payment Method: {order.payment_method || 'N/A'}</p>
-                              </div>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => navigate(`/track-order/${order.id}`)}
-                              >
-                                <Package className="w-4 h-4 mr-2" />
-                                Track Order
-                              </Button>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+            {activeTab === 'orders' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-serif font-bold" style={{ color: '#2D3E50' }}>My Orders</h2>
+                  <p className="text-sm" style={{ color: '#666666' }}>Track and manage your orders</p>
+                </div>
 
-            {/* Payments Tab */}
-            <TabsContent value="payments" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">Payment History</CardTitle>
-                  <CardDescription>View all your transactions</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {transactionsLoading ? (
-                    <div className="text-center py-12">
-                      <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Loading transactions...</p>
-                    </div>
-                  ) : transactions.length === 0 ? (
-                    <div className="text-center py-12">
-                      <CreditCard className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-lg font-medium mb-2">No transactions yet</p>
-                      <p className="text-muted-foreground">Your payment history will appear here</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {transactions.map((transaction) => (
-                        <div key={transaction.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              transaction.status === 'completed' ? 'bg-green-500/20 text-green-600' :
-                              transaction.status === 'pending' ? 'bg-yellow-500/20 text-yellow-600' :
-                              'bg-red-500/20 text-red-600'
-                            }`}>
-                              <CreditCard className="w-5 h-5" />
+                {ordersLoading ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 rounded-full mx-auto mb-4 animate-spin" style={{ border: '3px solid #D4AF37', borderTopColor: 'transparent' }} />
+                    <p style={{ color: '#666666' }}>Loading orders...</p>
+                  </div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-12">
+                    <Package className="w-16 h-16 mx-auto mb-4" style={{ color: '#CCCCCC' }} />
+                    <p className="text-lg font-medium mb-2" style={{ color: '#2D3E50' }}>No orders yet</p>
+                    <p className="mb-4" style={{ color: '#666666' }}>Start shopping to see your orders here</p>
+                    <button onClick={() => navigate('/shop')} className="px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105" style={{ background: '#D4AF37', color: '#2D3E50' }}>Browse Products</button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => (
+                      <div key={order.id} className="p-5 rounded-xl transition-all duration-300 hover:scale-[1.01]" style={{ background: '#F8F9FA', borderLeft: `4px solid ${getStatusColor(order.status)}` }}>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${getStatusColor(order.status)}15` }}>
+                              <span style={{ color: getStatusColor(order.status) }}>{getStatusIcon(order.status)}</span>
                             </div>
                             <div>
-                              <p className="font-semibold">Transaction #{transaction.transaction_id}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(transaction.created_at).toLocaleDateString('en-US', { 
-                                  year: 'numeric', 
-                                  month: 'short', 
-                                  day: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Method: {transaction.payment_method || 'N/A'}
-                              </p>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-semibold" style={{ color: '#2D3E50' }}>Order #{order.order_number}</h3>
+                                <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: `${getStatusColor(order.status)}20`, color: getStatusColor(order.status) }}>{order.status.toUpperCase()}</span>
+                              </div>
+                              <p className="text-sm" style={{ color: '#666666' }}>{new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <div className="text-right">
+                              <p className="text-xl font-bold" style={{ color: '#D4AF37' }}>₹{order.total_amount.toFixed(2)}</p>
+                              <p className="text-xs" style={{ color: '#666666' }}>{order.payment_status}</p>
+                            </div>
+                            <button onClick={() => navigate(`/track-order/${order.id}`)} className="px-4 py-2 rounded-lg font-medium transition-all duration-300 hover:scale-105" style={{ background: '#2D3E50', color: '#FFFFFF' }}>Track</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Payments Tab */}
+            {activeTab === 'payments' && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="text-xl font-serif font-bold" style={{ color: '#2D3E50' }}>Payment History</h2>
+                  <p className="text-sm" style={{ color: '#666666' }}>View all your transactions</p>
+                </div>
+
+                {transactionsLoading ? (
+                  <div className="text-center py-12">
+                    <div className="w-12 h-12 rounded-full mx-auto mb-4 animate-spin" style={{ border: '3px solid #D4AF37', borderTopColor: 'transparent' }} />
+                    <p style={{ color: '#666666' }}>Loading transactions...</p>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-12">
+                    <CreditCard className="w-16 h-16 mx-auto mb-4" style={{ color: '#CCCCCC' }} />
+                    <p className="text-lg font-medium mb-2" style={{ color: '#2D3E50' }}>No transactions yet</p>
+                    <p style={{ color: '#666666' }}>Your payment history will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {transactions.map((transaction) => {
+                      const statusColor = transaction.status === 'completed' ? '#10B981' : transaction.status === 'pending' ? '#F59E0B' : '#EF4444';
+                      return (
+                        <div key={transaction.id} className="flex items-center justify-between p-4 rounded-xl transition-all duration-300 hover:scale-[1.01]" style={{ background: '#F8F9FA' }}>
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: `${statusColor}15` }}>
+                              <CreditCard className="w-5 h-5" style={{ color: statusColor }} />
+                            </div>
+                            <div>
+                              <p className="font-semibold" style={{ color: '#2D3E50' }}>Transaction #{transaction.transaction_id}</p>
+                              <p className="text-sm" style={{ color: '#666666' }}>{new Date(transaction.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold text-primary">
-                              ₹{transaction.amount.toFixed(2)}
-                            </p>
-                            <Badge variant={
-                              transaction.status === 'completed' ? 'default' :
-                              transaction.status === 'pending' ? 'secondary' :
-                              'destructive'
-                            }>
-                              {transaction.status.toUpperCase()}
-                            </Badge>
+                            <p className="text-xl font-bold" style={{ color: '#D4AF37' }}>₹{transaction.amount.toFixed(2)}</p>
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: `${statusColor}20`, color: statusColor }}>{transaction.status.toUpperCase()}</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

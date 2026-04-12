@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc,
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
 export interface Product {
   id: string;
@@ -35,35 +27,22 @@ export const useProducts = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const querySnapshot = await getDocs(collection(db, 'products'));
-      console.log('🔥 Firebase products count:', querySnapshot.docs.length);
-      
-      let productsData = querySnapshot.docs.map(doc => {
-        const data = doc.data();
-        console.log('🔥 Product data:', { id: doc.id, ...data });
-        return {
-          id: doc.id,
-          ...data
-        };
-      }) as Product[];
-      
-      console.log('🔥 Total products before filter:', productsData.length);
-      
+      let query = supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
       // Filter active products for non-admin users
       if (!isAdmin) {
-        productsData = productsData.filter(p => p.is_active);
-        console.log('🔥 Active products after filter:', productsData.length);
+        query = query.eq('is_active', true);
       }
-      
-      // Sort by created_at descending
-      productsData.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-      
-      console.log('🔥 Final products to display:', productsData);
-      setProducts(productsData);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      console.log('✅ Supabase products count:', data?.length || 0);
+      setProducts((data as Product[]) || []);
     } catch (error: any) {
       console.error('❌ Error fetching products:', error);
       toast({
@@ -87,11 +66,17 @@ export const useProducts = () => {
     }
 
     try {
-      const docRef = await addDoc(collection(db, 'products'), {
-        ...productData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      });
+      const { data, error } = await supabase
+        .from('products')
+        .insert({
+          ...productData,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -99,7 +84,7 @@ export const useProducts = () => {
       });
 
       await fetchProducts();
-      return { data: { id: docRef.id, ...productData }, error: null };
+      return { data, error: null };
     } catch (error: any) {
       console.error('Error creating product:', error);
       toast({
@@ -122,11 +107,17 @@ export const useProducts = () => {
     }
 
     try {
-      const productRef = doc(db, 'products', productId);
-      await updateDoc(productRef, {
-        ...updates,
-        updated_at: new Date().toISOString(),
-      });
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', productId)
+        .select()
+        .single();
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -134,7 +125,7 @@ export const useProducts = () => {
       });
 
       await fetchProducts();
-      return { data: updates, error: null };
+      return { data, error: null };
     } catch (error: any) {
       console.error('Error updating product:', error);
       toast({
@@ -157,8 +148,12 @@ export const useProducts = () => {
     }
 
     try {
-      const productRef = doc(db, 'products', productId);
-      await deleteDoc(productRef);
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -189,7 +184,6 @@ export const useProducts = () => {
     }
 
     try {
-      // Use Supabase Storage for image upload
       const { uploadProductImage: uploadToSupabase } = await import('@/lib/supabaseClient');
       
       console.log('📤 Uploading image to Supabase Storage...');
@@ -198,12 +192,12 @@ export const useProducts = () => {
 
       toast({
         title: "Success",
-        description: "Image uploaded successfully to Supabase!",
+        description: "Image uploaded successfully!",
       });
 
       return { data: imageUrl, error: null };
     } catch (error: any) {
-      console.error('❌ Error uploading image to Supabase:', error);
+      console.error('❌ Error uploading image:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to upload image. Please try again.",
@@ -217,28 +211,26 @@ export const useProducts = () => {
   useEffect(() => {
     fetchProducts();
 
-    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
-      let productsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Product[];
-      
-      // Filter active products for non-admin users
-      if (!isAdmin) {
-        productsData = productsData.filter(p => p.is_active);
-      }
-      
-      // Sort by created_at descending
-      productsData.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-      
-      setProducts(productsData);
-    });
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('products-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'products',
+        },
+        (payload: RealtimePostgresChangesPayload<Product>) => {
+          console.log('🔄 Product change detected:', payload);
+          fetchProducts();
+        }
+      )
+      .subscribe();
 
-    return () => unsubscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, isAdmin]);
 
   return {
