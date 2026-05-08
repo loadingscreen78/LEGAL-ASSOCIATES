@@ -13,7 +13,7 @@ const galleryImages = [
 const storeInfo = {
   address: "Main Road, Cuttack, Odisha 753001",
   hours: "Mon-Sat: 10:00 AM - 8:00 PM",
-  phone: "+91 XXXXX XXXXX",
+  phone: "+91 9437019131",
   mapUrl: "https://maps.google.com"
 };
 

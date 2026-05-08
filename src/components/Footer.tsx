@@ -83,8 +83,7 @@ export const Footer = () => {
                 <li className="flex items-center gap-3">
                   <Phone className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
                   <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    <p>+91 XXXXX-XXXXX</p>
-                    <p>9437019131</p>
+                    <p>+91 9437019131</p>
                   </div>
                 </li>
                 <li className="flex items-center gap-3">
