@@ -25,7 +25,6 @@ import Login from "./pages/Login";
 import CheckoutInfo from "./pages/CheckoutInfo";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboardNew from "./pages/AdminDashboardNew";
-import FirestoreDebug from "./pages/FirestoreDebug";
 import OrderTracking from "./pages/OrderTracking";
 import VerifyEmail from "./pages/VerifyEmail";
 import SupabaseTest from "./pages/SupabaseTest";
@@ -68,7 +67,6 @@ const AppContent = () => {
         <Route path="/track-order/:orderId" element={<OrderTracking />} />
         <Route path="/payment" element={<Payment />} />
         <Route path="/order-success" element={<OrderSuccess />} />
-        <Route path="/debug" element={<FirestoreDebug />} />
         <Route path="/supabase-test" element={<SupabaseTest />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
