@@ -2,6 +2,56 @@ import { useState, useEffect } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
 import { AdminUser, Profile } from '@/types/database';
+import {
+  readLocalAdminSession,
+  writeLocalAdminSession,
+  clearLocalAdminSession,
+  checkLocalAdmin,
+  LOCAL_ADMIN,
+  LocalAdminSession,
+} from '@/lib/localAdmin';
+
+/**
+ * Synthetic user object we hand to React when the user has logged in via the
+ * local admin bypass (no Supabase auth). Shape matches the subset of the
+ * Supabase User that the app actually reads.
+ */
+const makeLocalAdminUser = (session: LocalAdminSession): User =>
+  ({
+    id: 'local-admin',
+    email: `${session.id}@local.admin`,
+    aud: 'authenticated',
+    role: 'authenticated',
+    email_confirmed_at: session.loggedInAt,
+    created_at: session.loggedInAt,
+    updated_at: session.loggedInAt,
+    user_metadata: { full_name: 'Administrator', local_admin: true },
+    app_metadata: { provider: 'local', local_admin: true },
+    identities: [],
+  } as unknown as User);
+
+const makeLocalAdminProfile = (session: LocalAdminSession): Profile =>
+  ({
+    id: 'local-admin',
+    user_id: 'local-admin',
+    full_name: 'Administrator',
+    phone: '',
+    address: '',
+    pincode: '',
+    email_verified: true,
+    created_at: session.loggedInAt,
+    updated_at: session.loggedInAt,
+  } as unknown as Profile);
+
+const makeLocalAdminRecord = (session: LocalAdminSession): AdminUser =>
+  ({
+    id: 'local-admin',
+    user_id: 'local-admin',
+    admin_level: 'super_admin',
+    permissions: { local: true },
+    created_at: session.loggedInAt,
+    updated_at: session.loggedInAt,
+  } as unknown as AdminUser);
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -11,6 +61,18 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Local admin bypass — if a previous local-admin session exists in
+    // localStorage, hydrate the auth state immediately so protected routes
+    // (admin dashboard) don't bounce us back to /login.
+    const local = readLocalAdminSession();
+    if (local) {
+      setUser(makeLocalAdminUser(local));
+      setProfile(makeLocalAdminProfile(local));
+      setAdminUser(makeLocalAdminRecord(local));
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -26,6 +88,9 @@ export const useAuth = () => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      // Ignore Supabase auth changes while a local admin session is active
+      if (readLocalAdminSession()) return;
+
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -78,7 +143,26 @@ export const useAuth = () => {
   const signIn = async (email: string, password: string, securityCode?: string) => {
     try {
       setLoading(true);
-      
+
+      // Local admin bypass — if ID/password/securityCode all match the
+      // compile-time LOCAL_ADMIN, log the user in without Supabase.
+      // This keeps the admin dashboard reachable even when the database
+      // is unreachable (missing envs, RLS misconfig, etc.).
+      if (
+        securityCode !== undefined &&
+        checkLocalAdmin(email, password, securityCode)
+      ) {
+        writeLocalAdminSession(LOCAL_ADMIN.id);
+        const localSession = readLocalAdminSession()!;
+        const localUser = makeLocalAdminUser(localSession);
+        setSession(null);
+        setUser(localUser);
+        setProfile(makeLocalAdminProfile(localSession));
+        setAdminUser(makeLocalAdminRecord(localSession));
+        setLoading(false);
+        return { data: { user: localUser, session: null }, error: null, isAdmin: true };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -256,6 +340,14 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      // Clear any local-admin bypass session first
+      const hadLocal = !!readLocalAdminSession();
+      clearLocalAdminSession();
+      if (hadLocal) {
+        setUser(null);
+        setProfile(null);
+        setAdminUser(null);
+      }
       const { error } = await supabase.auth.signOut();
       return { error };
     } catch (error: any) {

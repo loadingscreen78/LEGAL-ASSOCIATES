@@ -36,7 +36,7 @@ export const MobileLogin = () => {
     e.preventDefault();
     const errs: Record<string, string> = {};
     if (!email) errs.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = 'Enter a valid email';
+    else if (kind !== 'admin' && !/\S+@\S+\.\S+/.test(email)) errs.email = 'Enter a valid email';
     if (!password) errs.password = 'Password is required';
     else if (password.length < 6) errs.password = 'At least 6 characters';
     if (isSignUp) {
