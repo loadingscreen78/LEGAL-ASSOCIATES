@@ -39,6 +39,10 @@ const Login = () => {
     inputBorder: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(45, 62, 80, 0.2)',
     inputText: isDark ? '#FFFFFF' : '#101820',
     placeholder: isDark ? 'rgba(255,255,255,0.4)' : '#888888',
+    // Brand-aligned error color: gold border + deep navy text.
+    // Keeps validation visible without the jarring saturated red.
+    errorBorder: '#D4AF37',
+    errorText: isDark ? '#F4D47E' : '#8A6A1C',
   };
 
   React.useEffect(() => {
@@ -69,16 +73,40 @@ const Login = () => {
     
     try {
       if (isSignUp) {
-        const { error, needsVerification } = await signUp(email, password, { full_name: fullName });
+        const { error, needsVerification, data } = await signUp(email, password, { full_name: fullName });
         if (error) throw error;
-        if (needsVerification) { setLoading(false); navigate('/verify-email'); return; }
+
+        // If Supabase returned a session, the user is already logged in.
+        // Route them straight into the site with the same success animation
+        // we show after sign-in — do NOT bounce to /verify-email.
+        if (!needsVerification && data?.session) {
+          toast({ title: "Welcome!", description: "Your account is ready." });
+          setLoaderStage('success');
+          setTimeout(() => {
+            setLoaderStage('redirecting');
+            setTimeout(() => navigate('/user-dashboard'), 1500);
+          }, 1500);
+          return;
+        }
+
+        // Otherwise the project requires email confirmation — tell the user.
+        if (needsVerification) {
+          setLoading(false);
+          navigate('/verify-email');
+          return;
+        }
+
         toast({ title: "Account created!", description: "Please check your email to verify." });
         setIsSignUp(false);
         setLoading(false);
       } else {
         const { error, isAdmin, data } = await signIn(email, password, loginType === 'admin' ? securityCode : undefined);
         if (error) throw error;
-        if (loginType !== 'admin' && data?.user && !data.user.emailVerified) { setLoading(false); navigate('/verify-email'); return; }
+        if (loginType !== 'admin' && data?.user && !data.user.email_confirmed_at) {
+          setLoading(false);
+          navigate('/verify-email');
+          return;
+        }
         setLoaderStage('success');
         setTimeout(() => {
           setLoaderStage('redirecting');
@@ -86,7 +114,24 @@ const Login = () => {
         }, 2000);
       }
     } catch (error: any) {
-      toast({ title: "Authentication failed", description: error.message || "Please check your credentials.", variant: "destructive" });
+      // Supabase sends "Invalid login credentials" for wrong password AND for
+      // unconfirmed email. Detect each and show a helpful message.
+      const raw = (error?.message || '').toLowerCase();
+      let title = "Sign in failed";
+      let description = error?.message || "Please check your credentials.";
+
+      if (error?.code === 'email_not_confirmed' || raw.includes('not confirmed')) {
+        title = "Email not verified";
+        description = "We sent a verification link to your email. Please confirm it and try again.";
+      } else if (raw.includes('invalid login credentials') || raw.includes('invalid_credentials')) {
+        title = "Incorrect email or password";
+        description = "Double-check your email and password, then try again.";
+      } else if (raw.includes('user already registered') || raw.includes('already been registered')) {
+        title = "Account already exists";
+        description = "This email is already registered. Try signing in instead.";
+      }
+
+      toast({ title, description, variant: "destructive" });
       setLoading(false);
     }
   };
@@ -155,9 +200,9 @@ const Login = () => {
                 <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Full Name</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                  <input type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.fullName ? '2px solid #EF4444' : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
+                  <input type="text" placeholder="Enter your full name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.fullName ? `2px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
                 </div>
-                {errors.fullName && <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{errors.fullName}</p>}
+                {errors.fullName && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.fullName}</p>}
               </div>
             )}
 
@@ -166,9 +211,9 @@ const Login = () => {
               <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>{loginType === 'admin' ? 'Admin ID' : 'Email Address'}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                <input type="email" placeholder={loginType === 'admin' ? 'Enter admin ID' : 'Enter your email'} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.email ? '2px solid #EF4444' : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
+                <input type="email" placeholder={loginType === 'admin' ? 'Enter admin ID' : 'Enter your email'} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.email ? `2px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
               </div>
-              {errors.email && <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{errors.email}</p>}
+              {errors.email && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.email}</p>}
             </div>
 
             {/* Password */}
@@ -176,12 +221,12 @@ const Login = () => {
               <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                <input type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-12 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.password ? '2px solid #EF4444' : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
+                <input type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full pl-12 pr-12 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.password ? `2px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2" style={{ color: colors.textMuted }}>
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{errors.password}</p>}
+              {errors.password && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.password}</p>}
             </div>
 
             {/* Confirm Password (Sign Up) */}
@@ -190,9 +235,9 @@ const Login = () => {
                 <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Confirm Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                  <input type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2" style={{ background: colors.inputBg, border: errors.confirmPassword ? '1px solid #EF4444' : `1px solid ${colors.inputBorder}`, color: colors.text }} />
+                  <input type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2" style={{ background: colors.inputBg, border: errors.confirmPassword ? `1px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.text }} />
                 </div>
-                {errors.confirmPassword && <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{errors.confirmPassword}</p>}
+                {errors.confirmPassword && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.confirmPassword}</p>}
               </div>
             )}
 
@@ -202,9 +247,9 @@ const Login = () => {
                 <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>Security Code</label>
                 <div className="relative">
                   <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                  <input type="text" placeholder="Enter security code" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2" style={{ background: colors.inputBg, border: errors.securityCode ? '1px solid #EF4444' : `1px solid ${colors.inputBorder}`, color: colors.text }} />
+                  <input type="text" placeholder="Enter security code" value={securityCode} onChange={(e) => setSecurityCode(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2" style={{ background: colors.inputBg, border: errors.securityCode ? `1px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.text }} />
                 </div>
-                {errors.securityCode && <p className="text-xs mt-1" style={{ color: '#EF4444' }}>{errors.securityCode}</p>}
+                {errors.securityCode && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.securityCode}</p>}
               </div>
             )}
 

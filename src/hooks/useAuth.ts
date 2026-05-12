@@ -84,7 +84,20 @@ export const useAuth = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Supabase returns the generic "Invalid login credentials" for both
+        // wrong-password AND unconfirmed-email. Rewrite the message so the UI
+        // can show something accurate instead of confusing the user.
+        const raw = (error.message || '').toLowerCase();
+        if (raw.includes('email not confirmed') || raw.includes('not confirmed')) {
+          const friendly: any = new Error(
+            'Your email is not verified yet. Please check your inbox for the verification link.'
+          );
+          friendly.code = 'email_not_confirmed';
+          throw friendly;
+        }
+        throw error;
+      }
 
       let userIsAdmin = false;
 
@@ -185,6 +198,25 @@ export const useAuth = () => {
         if (profileError) {
           console.error('Error creating profile:', profileError);
         }
+      }
+
+      // If the Supabase project has "Confirm email" disabled, signUp returns
+      // a live session → user is logged in immediately. No verify-email step.
+      if (data.session) {
+        return { data, error: null, needsVerification: false };
+      }
+
+      // If "Confirm email" is OFF but no session came back (edge case on some
+      // projects), try to sign the user in right now so they land inside the
+      // site instead of on the verify-email page.
+      try {
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInWithPassword({ email, password });
+        if (!signInError && signInData.session) {
+          return { data: signInData, error: null, needsVerification: false };
+        }
+      } catch {
+        // ignored — fall through to needsVerification = true
       }
 
       return { data, error: null, needsVerification: true };

@@ -33,8 +33,11 @@ All colors MUST be HSL.
     --accent: 43 74% 52%; /* #D4AF37 - subtle gold */
     --accent-foreground: 210 22% 22%; /* deep navy text on gold */
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    /* Brand-aligned error tone: deep navy surface with gold text + border.
+       Avoids the jarring saturated red for inline form errors and toast
+       notifications while keeping them clearly distinct from success states. */
+    --destructive: 210 22% 22%; /* deep navy */
+    --destructive-foreground: 43 74% 72%; /* soft gold */
 
     --border: 240 6% 90%; /* light border */
     --input: 240 6% 90%;
@@ -74,8 +77,9 @@ All colors MUST be HSL.
     --accent: 43 74% 52%; /* #D4AF37 - gold */
     --accent-foreground: 210 25% 8%; /* dark navy text on gold */
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 94%;
+    /* Brand-aligned error tone (dark mode): deep navy surface + warm gold text */
+    --destructive: 210 25% 12%;
+    --destructive-foreground: 43 74% 62%;
 
     --border: 0 0% 15%; /* dark border */
     --input: 0 0% 15%;
