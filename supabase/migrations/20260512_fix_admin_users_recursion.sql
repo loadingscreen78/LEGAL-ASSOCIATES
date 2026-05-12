@@ -24,10 +24,9 @@ BEGIN;
 
 -- ---------- 1. HELPER FUNCTIONS (SECURITY DEFINER, STABLE) ----------
 
--- Drop first so re-running picks up any edits. CASCADE would drop dependent
--- policies — we want policies intact, so we DO NOT cascade.
-DROP FUNCTION IF EXISTS public.is_admin(UUID);
-DROP FUNCTION IF EXISTS public.is_super_admin(UUID);
+-- Safe on re-run: CREATE OR REPLACE updates the function body in place
+-- without touching dependent policies. (An explicit DROP would fail with
+-- error 2BP01 once policies already reference the function.)
 
 CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID DEFAULT auth.uid())
 RETURNS BOOLEAN
