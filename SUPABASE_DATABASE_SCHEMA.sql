@@ -54,24 +54,59 @@ CREATE TABLE IF NOT EXISTS public.admin_users (
 -- Enable RLS
 ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
 
+-- ============================================
+-- HELPER FUNCTIONS (SECURITY DEFINER to bypass RLS and avoid recursion)
+-- ============================================
+
+-- Check if the current (or given) user is an admin.
+-- SECURITY DEFINER + STABLE makes this safe to call from RLS policies
+-- without triggering recursion on admin_users.
+CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID DEFAULT auth.uid())
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.admin_users
+    WHERE user_id = check_user_id
+  );
+$$;
+
+-- Check if the current user is a super admin.
+CREATE OR REPLACE FUNCTION public.is_super_admin(check_user_id UUID DEFAULT auth.uid())
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.admin_users
+    WHERE user_id = check_user_id AND admin_level = 'super_admin'
+  );
+$$;
+
+-- Grant execute so anon and authenticated roles can call them from policies
+GRANT EXECUTE ON FUNCTION public.is_admin(UUID) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_super_admin(UUID) TO anon, authenticated;
+
 -- Policies for admin_users
+-- A user can always read their own admin row (non-recursive, direct match).
+CREATE POLICY "Users can view own admin row"
+  ON public.admin_users FOR SELECT
+  USING (user_id = auth.uid());
+
+-- Admins can view all admin rows (uses SECURITY DEFINER helper → no recursion).
 CREATE POLICY "Admins can view all admin users"
   ON public.admin_users FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users
-      WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 CREATE POLICY "Super admins can manage admin users"
   ON public.admin_users FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users
-      WHERE user_id = auth.uid() AND admin_level = 'super_admin'
-    )
-  );
+  USING (public.is_super_admin())
+  WITH CHECK (public.is_super_admin());
 
 -- ============================================
 -- PRODUCTS TABLE
@@ -96,33 +131,19 @@ ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 -- Policies for products
 CREATE POLICY "Anyone can view active products"
   ON public.products FOR SELECT
-  USING (is_active = TRUE OR EXISTS (
-    SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-  ));
+  USING (is_active = TRUE OR public.is_admin());
 
 CREATE POLICY "Admins can insert products"
   ON public.products FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  WITH CHECK (public.is_admin());
 
 CREATE POLICY "Admins can update products"
   ON public.products FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 CREATE POLICY "Admins can delete products"
   ON public.products FOR DELETE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 -- ============================================
 -- ORDERS TABLE
@@ -148,9 +169,7 @@ ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 -- Policies for orders
 CREATE POLICY "Users can view own orders"
   ON public.orders FOR SELECT
-  USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-  ));
+  USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "Users can create own orders"
   ON public.orders FOR INSERT
@@ -158,11 +177,7 @@ CREATE POLICY "Users can create own orders"
 
 CREATE POLICY "Admins can update orders"
   ON public.orders FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 -- ============================================
 -- ORDER ITEMS TABLE
@@ -189,9 +204,7 @@ CREATE POLICY "Users can view own order items"
     EXISTS (
       SELECT 1 FROM public.orders
       WHERE orders.id = order_items.order_id
-      AND (orders.user_id = auth.uid() OR EXISTS (
-        SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-      ))
+      AND (orders.user_id = auth.uid() OR public.is_admin())
     )
   );
 
@@ -227,9 +240,7 @@ ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 -- Policies for transactions
 CREATE POLICY "Users can view own transactions"
   ON public.transactions FOR SELECT
-  USING (auth.uid() = user_id OR EXISTS (
-    SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-  ));
+  USING (auth.uid() = user_id OR public.is_admin());
 
 CREATE POLICY "System can create transactions"
   ON public.transactions FOR INSERT
@@ -237,11 +248,7 @@ CREATE POLICY "System can create transactions"
 
 CREATE POLICY "Admins can update transactions"
   ON public.transactions FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 -- ============================================
 -- SECURITY AUDIT LOG TABLE
@@ -265,11 +272,7 @@ ALTER TABLE public.security_audit_log ENABLE ROW LEVEL SECURITY;
 -- Policies for security_audit_log
 CREATE POLICY "Admins can view audit logs"
   ON public.security_audit_log FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()
-    )
-  );
+  USING (public.is_admin());
 
 CREATE POLICY "System can insert audit logs"
   ON public.security_audit_log FOR INSERT
