@@ -6,6 +6,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useAuth } from '@/hooks/useAuth';
 import { generateInvoicePDF } from '@/lib/invoiceGenerator';
 import { useToast } from '@/hooks/use-toast';
+import { MobileOrderTracking } from '@/components/mobile/MobileOrderTracking';
 import { 
   Package, 
   Truck, 
@@ -207,8 +208,12 @@ const OrderTracking = () => {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 50%, #f0f4f8 100%)' }}>
       <Navigation mobileTitle="Track order" mobileShowBack hideMobileSearchIcon />
-      
-      <main className="pt-20 md:pt-24 pb-12">
+
+      {/* Mobile view (< md) */}
+      <MobileOrderTracking orderId={orderId} />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Back Button */}
           <button 
@@ -706,7 +711,9 @@ const OrderTracking = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
 
       {/* Custom Animation Styles */}
       <style>{`

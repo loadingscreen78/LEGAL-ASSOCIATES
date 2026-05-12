@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { useOrders } from '@/hooks/useOrders';
 import { ArrowLeft } from 'lucide-react';
+import { MobilePayment } from '@/components/mobile/MobilePayment';
 
 const Payment = () => {
   const { getTotalPrice } = useCart();
@@ -105,8 +106,12 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <Navigation mobileTitle="Payment" mobileShowBack hideMobileSearchIcon />
-      
-      <main className="pt-20 md:pt-24 pb-12">
+
+      {/* Mobile view (< md) */}
+      <MobilePayment />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="flex items-center mb-8 animate-fade-in">
             <Link to="/checkout" className="mr-4">
@@ -216,7 +221,9 @@ const Payment = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

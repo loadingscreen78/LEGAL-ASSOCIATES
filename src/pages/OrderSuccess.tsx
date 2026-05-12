@@ -5,6 +5,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MobileOrderSuccess } from '@/components/mobile/MobileOrderSuccess';
 
 const OrderSuccess = () => {
   const navigate = useNavigate();
@@ -35,10 +36,13 @@ const OrderSuccess = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted relative overflow-hidden">
       <Navigation mobileTitle="Order placed" hideMobileSearchIcon />
-      
-      {/* Confetti Animation */}
+
+      {/* Mobile view (< md) */}
+      <MobileOrderSuccess />
+
+      {/* Confetti Animation (desktop only; mobile gets a cleaner celebration) */}
       {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-10">
+        <div className="hidden md:block fixed inset-0 pointer-events-none z-10">
           {[...Array(50)].map((_, i) => (
             <div
               key={i}
@@ -56,7 +60,7 @@ const OrderSuccess = () => {
         </div>
       )}
       
-      <main className="pt-24 pb-12">
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Success Animation */}
           <div className="text-center mb-12 animate-fade-in">
@@ -171,7 +175,9 @@ const OrderSuccess = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

@@ -7,6 +7,7 @@ import { LoginLoader } from '@/components/LoginLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { MobileLogin } from '@/components/mobile/MobileLogin';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -93,7 +94,12 @@ const Login = () => {
   if (loading) return <LoginLoader stage={loaderStage} userType={loginType} userName={email ? email.split('@')[0] : undefined} />;
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: colors.bg }}>
+    <>
+      {/* Mobile login (< md) */}
+      <MobileLogin />
+
+      {/* Desktop / tablet login (≥ md) */}
+      <div className="hidden md:flex min-h-screen items-center justify-center relative overflow-hidden" style={{ background: colors.bg }}>
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-20 w-96 h-96 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%)' }} />
@@ -233,7 +239,8 @@ const Login = () => {
         {/* Footer */}
         <p className="text-center mt-8 text-xs" style={{ color: colors.textMuted }}>© 2024 Legal Associates. All rights reserved.</p>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

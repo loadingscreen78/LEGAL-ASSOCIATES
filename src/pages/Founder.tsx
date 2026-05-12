@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Quote, Award, BookOpen, TrendingUp, Trophy, Globe, Rocket, ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
+import { MobileFounder } from '@/components/mobile/MobileFounder';
 
 const milestones = [
   { year: "1985", title: "The Beginning", description: "Started with a small bookstore in Cuttack with just 50 law books and a dream to serve legal professionals", icon: BookOpen, color: "#D4AF37", image: "/lovable-uploads/d90dde4b-fcdf-452e-9612-348fa7878292.png" },
@@ -41,8 +42,12 @@ const Founder = () => {
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #101820 0%, #1a2a3a 50%, #0d1117 100%)' }}>
       <Navigation mobileTitle="Founder" mobileShowBack />
-      
-      <main className="pt-20 md:pt-24 pb-16">
+
+      {/* Mobile view (< md) */}
+      <MobileFounder />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-16">
         <div className="container mx-auto px-4">
           
           {/* Hero Section */}
@@ -303,7 +308,9 @@ const Founder = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

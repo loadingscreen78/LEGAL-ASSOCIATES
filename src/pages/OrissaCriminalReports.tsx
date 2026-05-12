@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { ArrowLeft, Minus, Plus, Mail, Phone, MapPin, ShoppingCart, Shield } from 'lucide-react';
+import { MobileOCR } from '@/components/mobile/MobileOCR';
 
 const OrissaCriminalReports = () => {
   const navigate = useNavigate();
@@ -57,8 +57,12 @@ const OrissaCriminalReports = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation mobileTitle="Reports" mobileShowBack />
-      
-      <main className="pt-20 md:pt-24 pb-12">
+
+      {/* Mobile view (< md) */}
+      <MobileOCR />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Back Button */}
           <div className="flex items-center mb-8 animate-fade-in">
@@ -319,7 +323,9 @@ const OrissaCriminalReports = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };
