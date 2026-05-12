@@ -7,6 +7,7 @@ import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AnimatedLoader } from "./components/AnimatedLoader";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Journals from "./pages/Journals";
@@ -76,19 +77,21 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <ThemeProvider>
-          <AuthProvider>
-            <CartProvider>
-              <AppContent />
-              <Toaster />
-              <Sonner />
-            </CartProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <CartProvider>
+                <AppContent />
+                <Toaster />
+                <Sonner />
+              </CartProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

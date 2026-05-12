@@ -1,22 +1,44 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 // Supabase configuration - single source for Auth, Database, and Storage
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error('Missing Supabase environment variables');
+/**
+ * Flag other code (and the root error screen) can read to decide whether
+ * Supabase-dependent features are usable. We intentionally DO NOT throw
+ * at module load — a throw here blanks the whole app (white screen).
+ */
+export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+
+if (!isSupabaseConfigured) {
+  // Log loudly in dev + prod, but let the app mount so users get a real UI.
+  // eslint-disable-next-line no-console
+  console.error(
+    '[supabase] Missing VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. ' +
+      'Auth, orders, and product data will be unavailable until these are set on the host.'
+  );
+} else {
+  // eslint-disable-next-line no-console
+  console.log('✅ Supabase client initialized for Auth, Database, and Storage');
 }
 
-console.log('✅ Supabase client initialized for Auth, Database, and Storage');
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true
+/**
+ * When envs are missing we still export a Supabase client stub so existing
+ * imports don't explode. The stub points at a placeholder URL (no network
+ * traffic will succeed, but module eval won't throw).
+ */
+export const supabase: SupabaseClient = createClient(
+  SUPABASE_URL || 'https://placeholder.supabase.co',
+  SUPABASE_ANON_KEY || 'public-anon-key-placeholder',
+  {
+    auth: {
+      autoRefreshToken: isSupabaseConfigured,
+      persistSession: isSupabaseConfigured,
+      detectSessionInUrl: isSupabaseConfigured,
+    },
   }
-});
+);
 
 /**
  * Upload a product image to Supabase Storage
