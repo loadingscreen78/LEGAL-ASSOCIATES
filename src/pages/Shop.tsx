@@ -5,6 +5,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Search, ShoppingCart, Star, Package, Sparkles, Grid, List } from 'lucide-react';
+import { MobileShop } from '@/components/mobile/MobileShop';
 
 const fallbackData = [
   { id: 'shop-1', title: "Complete Criminal Law Set", category: "Bundle", price: 2999, originalPrice: 4500, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop", description: "Comprehensive set including IPC, CrPC, and Evidence Act", rating: 4.9, inStock: true, bestseller: true },
@@ -66,9 +67,13 @@ const Shop = () => {
 
   return (
     <div className="min-h-screen" style={{ background: colors.bg }}>
-      <Navigation />
-      
-      <main className="pt-24 pb-16">
+      <Navigation mobileTitle="Shop" hideMobileSearchIcon />
+
+      {/* Mobile-first shop (< md) */}
+      <MobileShop />
+
+      {/* Desktop / tablet (≥ md) — original experience */}
+      <main className="hidden md:block pt-24 pb-16">
         <div className="relative py-16 mb-8" style={{ background: 'linear-gradient(135deg, #2D3E50 0%, #101820 100%)' }}>
           <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
           <div className="container mx-auto px-4 relative z-10 text-center">
@@ -189,7 +194,9 @@ const Shop = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

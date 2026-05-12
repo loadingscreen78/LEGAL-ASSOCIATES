@@ -523,3 +523,109 @@ html {
 .duration-1500 {
   transition-duration: 1500ms;
 }
+
+/* ============================================================
+   MOBILE-FIRST UX LAYER
+   Thumb-zone nav, safe-area insets, touch targets, native feel
+   ============================================================ */
+
+@layer base {
+  html {
+    /* Prevent iOS tap highlight flash */
+    -webkit-tap-highlight-color: transparent;
+    /* Improve touch scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent text-size adjust on orientation change */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    /* Respect device safe areas (notches, home indicators) */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    /* Disable pull-to-refresh from interfering with in-app scroll */
+    overscroll-behavior-y: contain;
+  }
+
+  /* Prevent iOS from zooming when focusing inputs (requires >= 16px) */
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+
+  /* Ensure interactive elements meet 44px touch target on mobile */
+  @media (max-width: 767px) {
+    button,
+    a[role="button"],
+    [role="tab"] {
+      min-height: 44px;
+    }
+  }
+
+  /* Nicer focus ring for keyboard users only */
+  :focus:not(:focus-visible) { outline: none; }
+}
+
+@layer utilities {
+  /* Safe-area-aware paddings (use via class e.g. pb-safe) */
+  .pt-safe { padding-top: env(safe-area-inset-top); }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  .pl-safe { padding-left: env(safe-area-inset-left); }
+  .pr-safe { padding-right: env(safe-area-inset-right); }
+
+  /* Reserve space so fixed bottom tab bar never covers content */
+  .pb-tabbar { padding-bottom: calc(64px + env(safe-area-inset-bottom) + 8px); }
+
+  /* Horizontal chip scrollers (hide scrollbar, snap items) */
+  .scroll-x {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scroll-x::-webkit-scrollbar { display: none; }
+  .snap-start-mx { scroll-snap-align: start; scroll-margin-left: 1rem; }
+
+  /* Tap feedback for native-ish press */
+  .tap-fade {
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .tap-fade:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+
+  /* Glass surface for floating mobile bars */
+  .surface-blur {
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+  }
+
+  /* Hide on mobile, show on md+ */
+  .desktop-only { display: none; }
+  @media (min-width: 768px) {
+    .desktop-only { display: initial; }
+    .mobile-only { display: none !important; }
+  }
+}
+
+/* Reserve space for the fixed mobile bottom tab bar at the app root.
+   Using body on mobile so every route (including pages with custom
+   footers) clears the tab bar without needing per-page edits. */
+@media (max-width: 767px) {
+  body {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  /* Respect safe areas at the very top too (when no fixed top bar) */
+}
+
+/* Keep the mobile WhatsApp FAB from colliding with the bottom tab bar */
+@media (max-width: 767px) {
+  a[href^="https://wa.me"] {
+    bottom: calc(72px + env(safe-area-inset-bottom)) !important;
+  }
+}

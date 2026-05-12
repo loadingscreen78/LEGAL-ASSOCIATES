@@ -104,9 +104,9 @@ const Payment = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <Navigation />
+      <Navigation mobileTitle="Payment" mobileShowBack hideMobileSearchIcon />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-4xl">
           <div className="flex items-center mb-8 animate-fade-in">
             <Link to="/checkout" className="mr-4">

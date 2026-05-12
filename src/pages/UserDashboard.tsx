@@ -6,6 +6,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useNavigate } from 'react-router-dom';
 import { User, Package, CreditCard, Edit, Save, MapPin, Phone, Mail, LogOut, ShoppingBag, Clock, CheckCircle, Truck, XCircle, AlertCircle } from 'lucide-react';
+import { MobileDashboard } from '@/components/mobile/MobileDashboard';
 
 const UserDashboard = () => {
   const { user, profile, signOut, updateProfile, loading: authLoading } = useAuth();
@@ -82,9 +83,13 @@ const UserDashboard = () => {
 
   return (
     <div className="min-h-screen" style={{ background: '#F8F9FA' }}>
-      <Navigation />
-      
-      <main className="pt-24 pb-16">
+      <Navigation mobileTitle="My account" hideMobileSearchIcon />
+
+      {/* Mobile dashboard (< md) */}
+      <MobileDashboard />
+
+      {/* Desktop / tablet dashboard (≥ md) */}
+      <main className="hidden md:block pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Header */}
           <div className="rounded-3xl p-8 mb-8 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #2D3E50 0%, #101820 100%)' }}>
@@ -283,7 +288,9 @@ const UserDashboard = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

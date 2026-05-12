@@ -40,9 +40,9 @@ const Founder = () => {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #101820 0%, #1a2a3a 50%, #0d1117 100%)' }}>
-      <Navigation />
+      <Navigation mobileTitle="Founder" mobileShowBack />
       
-      <main className="pt-24 pb-16">
+      <main className="pt-20 md:pt-24 pb-16">
         <div className="container mx-auto px-4">
           
           {/* Hero Section */}

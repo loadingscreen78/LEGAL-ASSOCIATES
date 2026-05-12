@@ -34,7 +34,7 @@ const OrderSuccess = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted relative overflow-hidden">
-      <Navigation />
+      <Navigation mobileTitle="Order placed" hideMobileSearchIcon />
       
       {/* Confetti Animation */}
       {showConfetti && (

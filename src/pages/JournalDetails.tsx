@@ -89,12 +89,12 @@ const JournalDetails = () => {
 
   return (
     <div className="min-h-screen" style={{ background: colors.bg }}>
-      <Navigation />
+      <Navigation mobileTitle="Journal" mobileShowBack />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-32 md:pb-12">
         <div className="container mx-auto px-4 max-w-6xl">
-          {/* Back Button */}
-          <div className="flex items-center mb-8">
+          {/* Back Button - desktop only (mobile uses top-bar back) */}
+          <div className="hidden md:flex items-center mb-8">
             <button 
               onClick={() => navigate('/journals')}
               className="flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105"
@@ -105,7 +105,7 @@ const JournalDetails = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
             {/* Journal Image */}
             <div className="animate-fade-in">
               <div className="relative group">
@@ -259,7 +259,64 @@ const JournalDetails = () => {
         </div>
       </main>
 
-      <Footer />
+      {/* Mobile sticky Add-to-Cart bar — sits above the tab bar */}
+      <div
+        className="md:hidden fixed left-0 right-0 z-40 px-4 pt-3 pb-safe surface-blur"
+        style={{
+          bottom: 'calc(64px + env(safe-area-inset-bottom))',
+          background: isDark ? 'rgba(11,16,23,0.88)' : 'rgba(246,247,251,0.94)',
+          borderTop: `1px solid ${colors.border}`,
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] uppercase tracking-wide" style={{ color: colors.textMuted }}>
+              {journal.stock > 0 ? 'Total' : 'Status'}
+            </div>
+            <div className="font-bold text-[18px]" style={{ color: '#D4AF37' }}>
+              {journal.stock > 0 ? `₹${(journal.price * quantity).toFixed(2)}` : 'Out of stock'}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 ml-auto">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-10 h-10 rounded-full flex items-center justify-center tap-fade"
+              style={{ background: 'rgba(212,175,55,0.12)', color: '#D4AF37' }}
+              aria-label="Decrease quantity"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="w-8 text-center font-semibold" style={{ color: colors.text }}>
+              {quantity}
+            </span>
+            <button
+              onClick={() => setQuantity(Math.min(Math.max(1, journal.stock), quantity + 1))}
+              className="w-10 h-10 rounded-full flex items-center justify-center tap-fade disabled:opacity-40"
+              disabled={quantity >= journal.stock}
+              style={{ background: 'rgba(212,175,55,0.12)', color: '#D4AF37' }}
+              aria-label="Increase quantity"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          <button
+            onClick={handleAddToCart}
+            disabled={journal.stock === 0}
+            className="h-11 px-5 rounded-full font-semibold text-[13px] tap-fade disabled:opacity-50"
+            style={{
+              background: '#D4AF37',
+              color: '#101820',
+              boxShadow: '0 10px 24px rgba(212,175,55,0.35)',
+            }}
+          >
+            Add to cart
+          </button>
+        </div>
+      </div>
+
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

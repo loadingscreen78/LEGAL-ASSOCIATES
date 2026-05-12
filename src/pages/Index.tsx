@@ -1,4 +1,3 @@
-
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
@@ -10,38 +9,28 @@ import { SearchFilterSection } from '@/components/home/SearchFilterSection';
 import { StoreGallery } from '@/components/home/StoreGallery';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { CallToActionFooter } from '@/components/home/CallToActionFooter';
+import { MobileHome } from '@/components/mobile/MobileHome';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navigation />
-      
-      {/* Hero Section */}
-      <HeroSection />
-      
-      {/* Top Journals Carousel */}
-      <TopJournalsCarousel />
-      
-      {/* About Us */}
-      <AboutSection />
-      
-      {/* Founder's Quote */}
-      <FounderQuote />
-      
-      {/* Book Categories Grid */}
-      <BookCategoriesGrid />
-      
-      {/* Search & Filter Section */}
-      <SearchFilterSection />
-      
-      {/* Store Gallery */}
-      <StoreGallery />
-      
-      {/* Testimonials */}
-      <TestimonialsSection />
-      
-      {/* Call to Action + Footer */}
-      <CallToActionFooter />
+
+      {/* Mobile-first home (< md) */}
+      <MobileHome />
+
+      {/* Desktop / tablet home (≥ md) — unchanged */}
+      <div className="hidden md:block">
+        <HeroSection />
+        <TopJournalsCarousel />
+        <AboutSection />
+        <FounderQuote />
+        <BookCategoriesGrid />
+        <SearchFilterSection />
+        <StoreGallery />
+        <TestimonialsSection />
+        <CallToActionFooter />
+      </div>
     </div>
   );
 };

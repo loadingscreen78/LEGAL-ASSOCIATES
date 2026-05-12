@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from '@/components/Navigation';
@@ -6,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useProducts } from '@/hooks/useProducts';
+import { MobileShop } from '@/components/mobile/MobileShop';
 
 const fallbackJournalData = [
   {
@@ -117,9 +117,13 @@ const Journals = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F0616] to-[#1a0a2e] dark:from-gray-900 dark:to-gray-800">
-      <Navigation />
-      
-      <main className="pt-24 pb-12">
+      <Navigation mobileTitle="Journals" hideMobileSearchIcon />
+
+      {/* Mobile-first journals (< md) */}
+      <MobileShop initialCategory="journals" lockCategory />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">
@@ -234,7 +238,9 @@ const Journals = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

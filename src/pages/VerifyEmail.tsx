@@ -85,9 +85,9 @@ const VerifyEmail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation mobileTitle="Verify email" mobileShowBack hideMobileSearchIcon />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-lg">
           <Card className="border-primary/20 shadow-lg">
             <CardHeader className="text-center">

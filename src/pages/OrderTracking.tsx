@@ -177,8 +177,8 @@ const OrderTracking = () => {
   if (!order) {
     return (
       <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%)' }}>
-        <Navigation />
-        <main className="pt-24 pb-12">
+        <Navigation mobileTitle="Track order" mobileShowBack hideMobileSearchIcon />
+        <main className="pt-20 md:pt-24 pb-12">
           <div className="container mx-auto px-4 max-w-4xl text-center py-16">
             <div className="w-24 h-24 rounded-3xl mx-auto mb-6 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fee2e2, #fecaca)' }}>
               <Package className="w-12 h-12" style={{ color: '#EF4444' }} />
@@ -206,9 +206,9 @@ const OrderTracking = () => {
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(180deg, #f0f4f8 0%, #e2e8f0 50%, #f0f4f8 100%)' }}>
-      <Navigation />
+      <Navigation mobileTitle="Track order" mobileShowBack hideMobileSearchIcon />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">
           {/* Back Button */}
           <button 

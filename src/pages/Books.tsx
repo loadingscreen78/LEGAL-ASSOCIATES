@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
+import { MobileShop } from '@/components/mobile/MobileShop';
 
 const fallbackBookData = [
   {
@@ -149,9 +150,13 @@ const Books = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F0616] to-[#1a0a2e]">
-      <Navigation />
-      
-      <main className="pt-24 pb-12">
+      <Navigation mobileTitle="Books" hideMobileSearchIcon />
+
+      {/* Mobile-first books (< md) */}
+      <MobileShop initialCategory="books" lockCategory />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">
@@ -289,7 +294,9 @@ const Books = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };

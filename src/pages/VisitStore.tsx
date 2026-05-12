@@ -29,9 +29,9 @@ const storeImages = [
 const VisitStore = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0F0616] to-[#1a0a2e]">
-      <Navigation />
+      <Navigation mobileTitle="Visit store" mobileShowBack />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Header */}
           <div className="text-center mb-12 animate-fade-in">

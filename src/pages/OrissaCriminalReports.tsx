@@ -56,9 +56,9 @@ const OrissaCriminalReports = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation mobileTitle="Reports" mobileShowBack />
       
-      <main className="pt-24 pb-12">
+      <main className="pt-20 md:pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-7xl">
           {/* Back Button */}
           <div className="flex items-center mb-8 animate-fade-in">

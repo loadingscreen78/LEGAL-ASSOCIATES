@@ -11,6 +11,7 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useOrders } from '@/hooks/useOrders';
 import { ArrowLeft } from 'lucide-react';
+import { MobileCheckout } from '@/components/mobile/MobileCheckout';
 
 const Checkout = () => {
   const { items, getTotalPrice, clearCart } = useCart();
@@ -103,8 +104,9 @@ const Checkout = () => {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-        <Navigation />
-        <main className="pt-24 pb-12">
+        <Navigation mobileTitle="Checkout" mobileShowBack hideMobileSearchIcon />
+        <MobileCheckout />
+        <main className="hidden md:block pt-24 pb-12">
           <div className="container mx-auto px-4 text-center">
             <div className="text-6xl mb-4">📚</div>
             <h1 className="text-3xl font-serif font-bold mb-4">Your cart is empty</h1>
@@ -116,16 +118,22 @@ const Checkout = () => {
             </Link>
           </div>
         </main>
-        <Footer />
+        <div className="hidden md:block">
+          <Footer />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
-      <Navigation />
-      
-      <main className="pt-24 pb-12">
+      <Navigation mobileTitle="Checkout" mobileShowBack hideMobileSearchIcon />
+
+      {/* Mobile checkout (< md) */}
+      <MobileCheckout />
+
+      {/* Desktop / tablet (≥ md) */}
+      <main className="hidden md:block pt-24 pb-12">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="flex items-center mb-8 animate-fade-in">
             <Link to="/shop" className="mr-4">
@@ -277,7 +285,9 @@ const Checkout = () => {
         </div>
       </main>
 
-      <Footer />
+      <div className="hidden md:block">
+        <Footer />
+      </div>
     </div>
   );
 };
