@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Search, ArrowLeft, ShoppingBag, Bell } from 'lucide-react';
+import { Search, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ThemeToggle } from '../ThemeToggle';
+import { MobileMoreSheet } from './MobileMoreSheet';
 
 interface MobileTopBarProps {
   /** Optional page title. If omitted, shows logo lockup. */
@@ -129,7 +129,6 @@ export const MobileTopBar = ({ title, showBack = false, hideSearch = false, righ
                   <Search className="w-5 h-5" />
                 </Link>
               )}
-              <ThemeToggle />
               <Link
                 to="/checkout"
                 aria-label={`Open cart${cartCount ? ` (${cartCount} items)` : ''}`}
@@ -151,6 +150,8 @@ export const MobileTopBar = ({ title, showBack = false, hideSearch = false, righ
                   </span>
                 )}
               </Link>
+              {/* More menu — opens a bottom sheet with Founder, Visit Store, OCR, contact, theme, sign-out */}
+              <MobileMoreSheet />
             </>
           )}
         </div>

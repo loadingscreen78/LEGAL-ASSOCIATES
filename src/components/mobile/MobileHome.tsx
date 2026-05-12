@@ -13,6 +13,7 @@ import {
   Sparkles,
   Search,
   Star,
+  Users,
 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -362,6 +363,73 @@ export const MobileHome = () => {
           </ul>
         </section>
       )}
+
+      {/* Meet the founder / Visit store — link to the currently-hidden routes */}
+      <section className="px-4 mt-6 grid grid-cols-2 gap-3">
+        <Link
+          to="/founder"
+          className="rounded-3xl overflow-hidden tap-fade relative"
+          style={{
+            background: colors.card,
+            border: `1px solid ${colors.border}`,
+            boxShadow: isDark ? '0 8px 22px rgba(0,0,0,0.4)' : '0 8px 22px rgba(15,23,42,0.06)',
+          }}
+        >
+          <div className="relative h-24">
+            <img
+              src="/lovable-uploads/22fb7bfd-70bd-48be-8584-6455e596dd93.png"
+              alt=""
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+            <div
+              className="absolute inset-0"
+              style={{ background: 'linear-gradient(180deg, transparent 0%, rgba(16,24,32,0.85) 100%)' }}
+            />
+          </div>
+          <div className="p-3">
+            <div
+              className="w-9 h-9 -mt-8 relative rounded-xl flex items-center justify-center mb-2"
+              style={{ background: '#D4AF37' }}
+            >
+              <Users className="w-4 h-4" style={{ color: '#101820' }} />
+            </div>
+            <div className="font-serif font-bold text-[14px]" style={{ color: colors.text }}>
+              Meet the founder
+            </div>
+            <div className="text-[11px]" style={{ color: colors.muted }}>
+              Our story since 1985
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/visit-store"
+          className="rounded-3xl overflow-hidden tap-fade relative"
+          style={{
+            background: colors.card,
+            border: `1px solid ${colors.border}`,
+            boxShadow: isDark ? '0 8px 22px rgba(0,0,0,0.4)' : '0 8px 22px rgba(15,23,42,0.06)',
+          }}
+        >
+          <div
+            className="h-24 flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(212,175,55,0.25) 0%, rgba(212,175,55,0.05) 100%)',
+            }}
+          >
+            <MapPin className="w-10 h-10" style={{ color: '#D4AF37' }} />
+          </div>
+          <div className="p-3">
+            <div className="font-serif font-bold text-[14px]" style={{ color: colors.text }}>
+              Visit our store
+            </div>
+            <div className="text-[11px]" style={{ color: colors.muted }}>
+              High Court Road, Cuttack
+            </div>
+          </div>
+        </Link>
+      </section>
 
       {/* Visit store / contact strip */}
       <section className="px-4 mt-7">
