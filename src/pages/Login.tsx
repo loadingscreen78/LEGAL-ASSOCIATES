@@ -211,7 +211,7 @@ const Login = () => {
               <label className="block text-sm font-medium mb-2" style={{ color: colors.text }}>{loginType === 'admin' ? 'Admin ID' : 'Email Address'}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.textMuted }} />
-                <input type="email" placeholder={loginType === 'admin' ? 'Enter admin ID' : 'Enter your email'} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.email ? `2px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
+                <input type={loginType === 'admin' ? 'text' : 'email'} placeholder={loginType === 'admin' ? 'Enter admin ID' : 'Enter your email'} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3.5 rounded-xl outline-none transition-all duration-300 focus:ring-2 focus:ring-[#D4AF37]" style={{ background: colors.inputBg, border: errors.email ? `2px solid ${colors.errorBorder}` : `1px solid ${colors.inputBorder}`, color: colors.inputText, boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.08)' }} />
               </div>
               {errors.email && <p className="text-xs mt-1" style={{ color: colors.errorText }}>{errors.email}</p>}
             </div>

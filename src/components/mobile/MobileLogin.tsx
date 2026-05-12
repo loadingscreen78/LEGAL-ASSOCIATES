@@ -158,13 +158,13 @@ export const MobileLogin = () => {
           <Field
             icon={<Mail className="w-4 h-4" />}
             label={kind === 'admin' ? 'Admin ID' : 'Email'}
-            type="email"
+            type={kind === 'admin' ? 'text' : 'email'}
             value={email}
             onChange={setEmail}
             placeholder={kind === 'admin' ? 'Enter admin ID' : 'you@example.com'}
             error={errors.email}
-            autoComplete="email"
-            inputMode="email"
+            autoComplete={kind === 'admin' ? 'username' : 'email'}
+            inputMode={kind === 'admin' ? 'text' : 'email'}
           />
 
           <Field
