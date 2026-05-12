@@ -44,12 +44,11 @@ export const useProducts = () => {
       console.log('✅ Supabase products count:', data?.length || 0);
       setProducts((data as Product[]) || []);
     } catch (error: any) {
+      // Log in dev only — a transient network error or RLS misconfig shouldn't
+      // pop a destructive toast on pages that don't list products (e.g. Login).
+      // Admin pages that depend on products can still surface their own
+      // per-action toasts when create/update/delete fails.
       console.error('❌ Error fetching products:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch products. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
