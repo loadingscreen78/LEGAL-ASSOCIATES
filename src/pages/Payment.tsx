@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCart } from '@/contexts/CartContext';
 import { useOrders } from '@/hooks/useOrders';
+import { sendOrderEmail } from '@/lib/sendOrderEmail';
 import { ArrowLeft } from 'lucide-react';
 import { MobilePayment } from '@/components/mobile/MobilePayment';
 
@@ -77,6 +78,12 @@ const Payment = () => {
       };
 
       localStorage.setItem('orderData', JSON.stringify(orderData));
+
+      // Fire the confirmation email. Uses the DB order UUID (currentOrderId),
+      // not the display TXN id, so the API can look up the real order row.
+      // Awaited for a few seconds max — best-effort, never blocks navigation.
+      sendOrderEmail(currentOrderId).catch(() => { /* swallowed */ });
+
       localStorage.removeItem('currentOrderId');
       localStorage.removeItem('orderAmount');
       

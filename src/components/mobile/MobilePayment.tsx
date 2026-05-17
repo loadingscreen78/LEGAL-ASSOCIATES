@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, CreditCard, Landmark, ShieldCheck, Lock, Loader2 } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
+import { sendOrderEmail } from '@/lib/sendOrderEmail';
 
 /**
  * MobilePayment — single-column payment chooser with a sticky "Pay now" CTA.
@@ -51,6 +52,10 @@ export const MobilePayment = () => {
       localStorage.setItem('orderData', JSON.stringify({
         orderId: txId, amount, paymentMethod: method, timestamp: new Date().toISOString(),
       }));
+
+      // Best-effort confirmation email. Uses DB order UUID; never blocks UX.
+      sendOrderEmail(orderId).catch(() => { /* swallowed */ });
+
       localStorage.removeItem('currentOrderId');
       localStorage.removeItem('orderAmount');
       navigate('/order-success');
