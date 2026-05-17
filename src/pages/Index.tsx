@@ -2,6 +2,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { HeroSection } from '@/components/home/HeroSection';
 import { TopJournalsCarousel } from '@/components/home/TopJournalsCarousel';
+import { RecentlyPublished } from '@/components/home/RecentlyPublished';
 import { AboutSection } from '@/components/home/AboutSection';
 import { FounderQuote } from '@/components/home/FounderQuote';
 import { BookCategoriesGrid } from '@/components/home/BookCategoriesGrid';
@@ -22,6 +23,7 @@ const Index = () => {
       {/* Desktop / tablet home (≥ md) — unchanged */}
       <div className="hidden md:block">
         <HeroSection />
+        <RecentlyPublished />
         <TopJournalsCarousel />
         <AboutSection />
         <FounderQuote />

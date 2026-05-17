@@ -18,6 +18,7 @@ import {
 import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCart } from '@/contexts/CartContext';
+import { RecentlyPublished } from '@/components/home/RecentlyPublished';
 
 /**
  * MobileHome — redesigned home page for mobile users.
@@ -191,6 +192,11 @@ export const MobileHome = () => {
             );
           })}
         </ul>
+      </section>
+
+      {/* Recently published — live slideshow synced from the admin panel */}
+      <section className="mt-6">
+        <RecentlyPublished compact />
       </section>
 
       {/* Featured journals rail */}
