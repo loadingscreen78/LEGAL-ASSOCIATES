@@ -2,6 +2,7 @@ import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { MobileVisitStore } from '@/components/mobile/MobileVisitStore';
+import { CONTACT_EMAIL, buildContactMailto } from '@/lib/contactMail';
 
 const storeImages = [
   {
@@ -82,10 +83,18 @@ const VisitStore = () => {
 
                   <div className="flex items-start space-x-4">
                     <div className="text-2xl">📧</div>
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-white text-lg mb-1">Email</h3>
-                      <p className="text-gray-300">akshaya.ocr@gmail.com</p>
-                      <p className="text-gray-300">legalassociates.ocr@gmail.com</p>
+                      <a
+                        href={buildContactMailto('general')}
+                        className="block text-gray-300 hover:text-[#D4AF37] transition-colors break-all"
+                        title="Send us an email — opens your mail client with a prefilled message"
+                      >
+                        {CONTACT_EMAIL}
+                      </a>
+                      <p className="text-xs text-gray-400 mt-1">
+                        For orders, subscriptions and general queries.
+                      </p>
                     </div>
                   </div>
 
@@ -111,8 +120,16 @@ const VisitStore = () => {
                     📞 Call Now
                   </Button>
                   <Button
-                    onClick={() => window.open('https://maps.google.com/?q=Cuttack,Odisha', '_blank')}
+                    asChild
                     className="flex-1 bg-[#D4AF37] hover:bg-[#f4d03f] text-[#0F0616] font-semibold py-3"
+                  >
+                    <a href={buildContactMailto('general')}>
+                      ✉️ Email Us
+                    </a>
+                  </Button>
+                  <Button
+                    onClick={() => window.open('https://maps.google.com/?q=Cuttack,Odisha', '_blank')}
+                    className="flex-1 bg-[#1a0a2e] hover:bg-[#2a1a3e] text-white border border-[#D4AF37]/40 font-semibold py-3"
                   >
                     📍 Get Directions
                   </Button>

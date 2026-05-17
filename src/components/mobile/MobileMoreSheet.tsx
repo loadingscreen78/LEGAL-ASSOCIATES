@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { CONTACT_EMAIL, CONTACT_PHONE, buildContactMailto } from '@/lib/contactMail';
 
 /**
  * MobileMoreSheet — bottom-sheet that surfaces every secondary route the
@@ -64,8 +65,8 @@ export const MobileMoreSheet = () => {
     {
       heading: 'Contact',
       items: [
-        { href: 'tel:+919437019131', label: 'Call us', icon: Phone, sub: '+91 94370 19131' },
-        { href: 'mailto:legalassociates.ocr@gmail.com', label: 'Email us', icon: Mail, sub: 'legalassociates.ocr@gmail.com' },
+        { href: `tel:${CONTACT_PHONE.replace(/\s/g, '')}`, label: 'Call us', icon: Phone, sub: CONTACT_PHONE },
+        { href: buildContactMailto('general'), label: 'Email us', icon: Mail, sub: CONTACT_EMAIL },
       ],
     },
   ];

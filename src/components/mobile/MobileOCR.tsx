@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, Shield, Minus, Plus, Mail, Phone, MapPin } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { CONTACT_EMAIL, buildContactMailto } from '@/lib/contactMail';
 
 /**
  * MobileOCR — Mobile view for the Orissa Criminal Reports subscription page.
@@ -222,8 +223,8 @@ export const MobileOCR = () => {
           </div>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4" style={{ color: '#D4AF37' }} />
-            <a href="mailto:legalassociates.ocr@gmail.com" className="text-[13px] truncate" style={{ color: '#1F2937' }}>
-              legalassociates.ocr@gmail.com
+            <a href={buildContactMailto('subscription')} className="text-[13px] truncate" style={{ color: '#1F2937' }}>
+              {CONTACT_EMAIL}
             </a>
           </div>
         </Card>

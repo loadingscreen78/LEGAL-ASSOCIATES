@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Phone, Mail, MapPin, Clock, ArrowRight, Scale, BookOpen, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, ArrowRight, Scale, BookOpen, Facebook, Twitter, Linkedin, Instagram, Send } from 'lucide-react';
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_OFFICE, buildContactMailto } from '@/lib/contactMail';
 
 const quickLinks = [
   { label: 'Law Journals', href: '/journals', icon: '📘' },
@@ -80,17 +81,42 @@ export const Footer = () => {
                     <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>High Court Road, Cuttack - 753002, Odisha</p>
                   </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
-                  <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>
-                    <p>+91 9437019131</p>
+                <li className="flex items-start gap-3">
+                  <Phone className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                    <a href={`tel:${CONTACT_PHONE_OFFICE.replace(/[^\d+]/g, '')}`} className="block transition-colors hover:text-white">{CONTACT_PHONE_OFFICE} (Office)</a>
+                    <a href={`tel:${CONTACT_PHONE.replace(/\s/g, '')}`} className="block transition-colors hover:text-white">{CONTACT_PHONE} (Mobile)</a>
                   </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <Mail className="w-5 h-5 flex-shrink-0" style={{ color: '#D4AF37' }} />
-                  <span className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>legalassociates.ocr@gmail.com</span>
+                <li className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 mt-0.5 flex-shrink-0" style={{ color: '#D4AF37' }} />
+                  <div className="text-sm min-w-0" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                    <a
+                      href={buildContactMailto('general')}
+                      className="block break-all transition-colors hover:text-white"
+                      title="Send us an email — opens your mail client with a prefilled message"
+                    >
+                      {CONTACT_EMAIL}
+                    </a>
+                    <p className="text-xs mt-0.5" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
+                      For orders, subscriptions and general queries.
+                    </p>
+                  </div>
                 </li>
               </ul>
+
+              {/* Send-message CTA — opens a descriptive prefilled email */}
+              <a
+                href={buildContactMailto('general')}
+                className="inline-flex items-center gap-2 mt-5 px-4 py-2.5 rounded-full font-medium text-sm transition-all duration-300 hover:scale-105"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.12)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  color: '#D4AF37',
+                }}
+              >
+                <Send className="w-4 h-4" /> Send us a message
+              </a>
             </div>
 
             {/* Hours */}

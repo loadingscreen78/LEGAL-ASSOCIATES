@@ -1,4 +1,5 @@
-import { Phone, MapPin, Mail, Clock, Navigation as NavIcon, BookOpen, Truck, ClipboardList, CreditCard } from 'lucide-react';
+import { Phone, MapPin, Mail, Clock, Navigation as NavIcon, BookOpen, Truck, ClipboardList, CreditCard, Send } from 'lucide-react';
+import { CONTACT_EMAIL, buildContactMailto } from '@/lib/contactMail';
 
 /**
  * MobileVisitStore — thumb-friendly "Visit Us" page.
@@ -72,8 +73,23 @@ export const MobileVisitStore = () => {
         </InfoCard>
 
         <InfoCard icon={<Mail className="w-4 h-4" />} title="Email">
-          <a href="mailto:legalassociates.ocr@gmail.com" className="block truncate">legalassociates.ocr@gmail.com</a>
-          <a href="mailto:akshaya.ocr@gmail.com" className="block truncate">akshaya.ocr@gmail.com</a>
+          <a
+            href={buildContactMailto('general')}
+            className="block truncate underline-offset-2 hover:underline"
+            title="Send us an email — opens your mail client with a prefilled message"
+          >
+            {CONTACT_EMAIL}
+          </a>
+          <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Orders, subscriptions and general queries.
+          </p>
+          <a
+            href={buildContactMailto('general')}
+            className="mt-3 h-10 rounded-full flex items-center justify-center gap-2 font-semibold text-[12px] tap-fade"
+            style={{ background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.4)', color: '#D4AF37' }}
+          >
+            <Send className="w-3.5 h-3.5" /> Send us a message
+          </a>
         </InfoCard>
 
         <InfoCard icon={<Clock className="w-4 h-4" />} title="Store hours">

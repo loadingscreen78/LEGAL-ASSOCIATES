@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { Phone, Mail, MapPin, Award, Users, BookOpen, Scale, ArrowRight, Clock, Target, Sparkles, Rocket, Globe } from 'lucide-react';
+import { Phone, Mail, MapPin, Award, Users, BookOpen, Scale, ArrowRight, Clock, Target, Sparkles, Rocket, Globe, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
+import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_OFFICE, buildContactMailto } from '@/lib/contactMail';
 
 const timelineEvents = [
   { year: '1980', title: 'The Beginning', description: 'Founded a small bookstore in Cuttack with just 50 law books and a vision to serve legal professionals', icon: Sparkles, color: '#D4AF37' },
@@ -270,29 +271,51 @@ export const AboutSection = () => {
           <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
             <div>
               <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4" style={{ color: '#FFFFFF' }}>Visit Our <span style={{ color: '#D4AF37' }}>Store</span></h3>
-              <p className="mb-6" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Experience our extensive collection of legal publications in person.</p>
-              <Link to="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105" style={{ background: '#D4AF37', color: '#101820' }}>
-                Browse Collection <ArrowRight className="w-5 h-5" />
-              </Link>
+              <p className="mb-6" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Experience our extensive collection of legal publications in person, or write to us anytime — we read every message.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Link to="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105" style={{ background: '#D4AF37', color: '#101820' }}>
+                  Browse Collection <ArrowRight className="w-5 h-5" />
+                </Link>
+                <a
+                  href={buildContactMailto('general')}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105"
+                  style={{ background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#D4AF37' }}
+                  title="Send us an email — opens your mail client with a prefilled message"
+                >
+                  <Send className="w-4 h-4" /> Send us a message
+                </a>
+              </div>
             </div>
             <div className="space-y-4">
               {[
-                { icon: MapPin, title: 'Location', text: 'High Court Road, Cuttack - 753002, Odisha' },
-                { icon: Phone, title: 'Phone', text: '0671-2910130 | 94370-19131' },
-                { icon: Mail, title: 'Email', text: 'legalassociates.ocr@gmail.com' },
-                { icon: Clock, title: 'Hours', text: 'Mon-Sat: 10:00 AM - 8:00 PM' },
+                { icon: MapPin, title: 'Location', text: 'High Court Road, Cuttack – 753002, Odisha', href: 'https://maps.google.com/?q=High+Court+Road+Cuttack+753002' },
+                { icon: Phone,  title: 'Phone',    text: `${CONTACT_PHONE_OFFICE} · ${CONTACT_PHONE}`, href: `tel:${CONTACT_PHONE_OFFICE.replace(/[^\d+]/g, '')}` },
+                { icon: Mail,   title: 'Email',    text: CONTACT_EMAIL, href: buildContactMailto('general') },
+                { icon: Clock,  title: 'Hours',    text: 'Mon–Sat · 10:00 AM – 8:00 PM' },
               ].map((item, index) => {
                 const Icon = item.icon;
-                return (
-                  <div key={index} className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                const inner = (
+                  <div className="flex items-center gap-4 p-4 rounded-xl transition-all duration-300 hover:translate-x-1" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(212, 175, 55, 0.2)' }}>
                       <Icon className="w-5 h-5" style={{ color: '#D4AF37' }} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <p className="font-semibold" style={{ color: '#FFFFFF' }}>{item.title}</p>
-                      <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{item.text}</p>
+                      <p className="text-sm break-words" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{item.text}</p>
                     </div>
                   </div>
+                );
+                return item.href ? (
+                  <a
+                    key={index}
+                    href={item.href}
+                    target={item.href.startsWith('http') ? '_blank' : undefined}
+                    rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                  >
+                    {inner}
+                  </a>
+                ) : (
+                  <div key={index}>{inner}</div>
                 );
               })}
             </div>

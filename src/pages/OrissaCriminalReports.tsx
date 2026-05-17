@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { ArrowLeft, Minus, Plus, Mail, Phone, MapPin, ShoppingCart, Shield } from 'lucide-react';
 import { MobileOCR } from '@/components/mobile/MobileOCR';
+import { CONTACT_EMAIL, buildContactMailto } from '@/lib/contactMail';
 
 const OrissaCriminalReports = () => {
   const navigate = useNavigate();
@@ -311,10 +312,27 @@ const OrissaCriminalReports = () => {
                     <div className="flex items-center space-x-3">
                       <Mail className="text-accent" size={20} />
                       <div>
-                        <p className="text-foreground">akshaya.ocr@gmail.com</p>
-                        <p className="text-foreground">legalassociates.ocr@gmail.com</p>
+                        <a
+                          href={buildContactMailto('subscription')}
+                          className="text-foreground hover:text-accent transition-colors"
+                          title="Send us a subscription enquiry — opens your mail client with a prefilled message"
+                        >
+                          {CONTACT_EMAIL}
+                        </a>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          For subscription enquiries, single-issue orders and editorial correspondence.
+                        </p>
                       </div>
                     </div>
+
+                    <Button
+                      asChild
+                      className="w-full mt-2 bg-accent hover:bg-accent/90 text-accent-foreground"
+                    >
+                      <a href={buildContactMailto('subscription')}>
+                        <Mail className="w-4 h-4 mr-2" /> Send us a message
+                      </a>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
