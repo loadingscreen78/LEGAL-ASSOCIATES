@@ -7,6 +7,7 @@ import { LoginLoader } from '@/components/LoginLoader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
+import { requestSignupOtp } from '@/lib/authOtp';
 import { MobileLogin } from '@/components/mobile/MobileLogin';
 
 const Login = () => {
@@ -73,32 +74,48 @@ const Login = () => {
     
     try {
       if (isSignUp) {
-        const { error, needsVerification, data } = await signUp(email, password, { full_name: fullName });
-        if (error) throw error;
-
-        // If Supabase returned a session, the user is already logged in.
-        // Route them straight into the site with the same success animation
-        // we show after sign-in — do NOT bounce to /verify-email.
-        if (!needsVerification && data?.session) {
-          toast({ title: "Welcome!", description: "Your account is ready." });
-          setLoaderStage('success');
-          setTimeout(() => {
-            setLoaderStage('redirecting');
-            setTimeout(() => navigate('/user-dashboard'), 1500);
-          }, 1500);
-          return;
-        }
-
-        // Otherwise the project requires email confirmation — tell the user.
-        if (needsVerification) {
+        // New flow: client → /api/auth/send-otp → user gets OTP email →
+        // /verify-otp → /api/auth/verify-otp → sign in.
+        const r = await requestSignupOtp({ email, password, fullName });
+        if (!r.ok) {
+          if (r.code === 'already_exists') {
+            toast({
+              title: 'Account already exists',
+              description: 'This email is already registered. Try signing in instead.',
+              variant: 'destructive',
+            });
+            setIsSignUp(false);
+          } else {
+            toast({
+              title: 'Could not start verification',
+              description: r.error || 'Please try again.',
+              variant: 'destructive',
+            });
+          }
           setLoading(false);
-          navigate('/verify-email');
           return;
         }
 
-        toast({ title: "Account created!", description: "Please check your email to verify." });
-        setIsSignUp(false);
+        // Park the credentials in sessionStorage so the verify page can
+        // sign the user in once the OTP is confirmed. Cleared after success.
+        sessionStorage.setItem(
+          'la_pendingSignup',
+          JSON.stringify({
+            email,
+            password,
+            fullName,
+            cooldownSeconds: r.cooldownSeconds ?? 60,
+            expiresInMinutes: r.expiresInMinutes ?? 10,
+          })
+        );
+
+        toast({
+          title: 'Code sent',
+          description: `We emailed a 6-digit code to ${email}.`,
+        });
         setLoading(false);
+        navigate('/verify-otp');
+        return;
       } else {
         const { error, isAdmin, data } = await signIn(email, password, loginType === 'admin' ? securityCode : undefined);
         if (error) throw error;

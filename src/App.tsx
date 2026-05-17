@@ -29,6 +29,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminDashboardNew from "./pages/AdminDashboardNew";
 import OrderTracking from "./pages/OrderTracking";
 import VerifyEmail from "./pages/VerifyEmail";
+import VerifyOtp from "./pages/VerifyOtp";
 import SupabaseTest from "./pages/SupabaseTest";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const AppContent = () => {
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/login" element={<Login />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-otp" element={<VerifyOtp />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/admin-dashboard/*" element={<AdminDashboardNew />} />
         <Route path="/track-order/:orderId" element={<OrderTracking />} />
