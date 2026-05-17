@@ -19,6 +19,7 @@ import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useCart } from '@/contexts/CartContext';
 import { RecentlyPublished } from '@/components/home/RecentlyPublished';
+import { EditableText } from '@/components/admin/EditableText';
 
 /**
  * MobileHome — redesigned home page for mobile users.
@@ -91,18 +92,24 @@ export const MobileHome = () => {
             style={{ background: 'rgba(212,175,55,0.18)', border: '1px solid rgba(212,175,55,0.35)' }}
           >
             <Sparkles className="w-3 h-3" style={{ color: '#D4AF37' }} />
-            <span className="text-[11px] font-medium tracking-wide" style={{ color: '#D4AF37' }}>
-              Since 1980 · Cuttack, Odisha
-            </span>
+            <EditableText
+              keyName="mobileHero.badge"
+              className="text-[11px] font-medium tracking-wide"
+              style={{ color: '#D4AF37' }}
+            />
           </div>
 
           <h1 className="font-serif font-bold leading-tight text-white" style={{ fontSize: 28 }}>
-            Empowering <br />
-            <span style={{ color: '#D4AF37' }}>Legal Minds</span>
+            <EditableText keyName="mobileHero.title" /> <br />
+            <EditableText keyName="mobileHero.titleAccent" style={{ color: '#D4AF37' }} />
           </h1>
-          <p className="mt-2 text-[14px] leading-relaxed" style={{ color: 'rgba(255,255,255,0.75)' }}>
-            Journals, bare acts, and legal publications trusted by professionals.
-          </p>
+          <EditableText
+            keyName="mobileHero.subtitle"
+            as="p"
+            multiline
+            className="mt-2 text-[14px] leading-relaxed"
+            style={{ color: 'rgba(255,255,255,0.75)' }}
+          />
 
           {/* Inline search "chip" that routes to shop */}
           <button
@@ -116,7 +123,7 @@ export const MobileHome = () => {
             aria-label="Search books, journals, and publications"
           >
             <Search className="w-4 h-4" style={{ color: '#2D3E50' }} />
-            <span className="text-[14px]">Search books, journals…</span>
+            <EditableText keyName="mobileHero.search" className="text-[14px]" />
             <span className="ml-auto text-[11px] font-semibold px-2 py-1 rounded-full" style={{ background: '#D4AF37', color: '#101820' }}>
               Go
             </span>
@@ -129,27 +136,27 @@ export const MobileHome = () => {
               className="h-11 rounded-full flex items-center justify-center gap-2 text-[14px] font-semibold tap-fade"
               style={{ background: '#D4AF37', color: '#101820' }}
             >
-              <BookOpen className="w-4 h-4" /> Explore
+              <BookOpen className="w-4 h-4" /> <EditableText keyName="mobileHero.ctaExplore" />
             </Link>
             <Link
               to="/visit-store"
               className="h-11 rounded-full flex items-center justify-center gap-2 text-[14px] font-medium tap-fade"
               style={{ background: 'rgba(255,255,255,0.12)', color: '#FFFFFF', border: '1px solid rgba(255,255,255,0.22)' }}
             >
-              <MapPin className="w-4 h-4" /> Visit Store
+              <MapPin className="w-4 h-4" /> <EditableText keyName="mobileHero.ctaVisit" />
             </Link>
           </div>
 
           {/* Stats strip */}
           <div className="mt-5 grid grid-cols-3 gap-2">
-            {[
-              { v: '40+', l: 'Years' },
-              { v: '500+', l: 'Titles' },
-              { v: '10K+', l: 'Customers' },
-            ].map((s) => (
-              <div key={s.l} className="text-center">
-                <div className="font-bold text-[18px]" style={{ color: '#D4AF37' }}>{s.v}</div>
-                <div className="text-[10px] tracking-wide uppercase" style={{ color: 'rgba(255,255,255,0.6)' }}>{s.l}</div>
+            {([
+              { vKey: 'mobileHero.statYears',  lKey: 'mobileHero.statYearsLabel' },
+              { vKey: 'mobileHero.statTitles', lKey: 'mobileHero.statTitlesLabel' },
+              { vKey: 'mobileHero.statHappy',  lKey: 'mobileHero.statHappyLabel' },
+            ]).map((s) => (
+              <div key={s.vKey} className="text-center">
+                <EditableText keyName={s.vKey} as="div" className="font-bold text-[18px]" style={{ color: '#D4AF37' }} />
+                <EditableText keyName={s.lKey} as="div" className="text-[10px] tracking-wide uppercase" style={{ color: 'rgba(255,255,255,0.6)' }} />
               </div>
             ))}
           </div>
@@ -159,9 +166,7 @@ export const MobileHome = () => {
       {/* Category chips (horizontal, thumb-friendly) */}
       <section className="mt-5">
         <div className="px-4 mb-3 flex items-center justify-between">
-          <h2 className="font-serif font-bold text-[18px]" style={{ color: colors.text }}>
-            Browse categories
-          </h2>
+          <EditableText keyName="mobileHero.categoriesTitle" as="h2" className="font-serif font-bold text-[18px]" style={{ color: colors.text }} />
           <Link to="/shop" className="text-[13px] font-medium flex items-center gap-1" style={{ color: '#D4AF37' }}>
             All <ArrowRight className="w-3.5 h-3.5" />
           </Link>

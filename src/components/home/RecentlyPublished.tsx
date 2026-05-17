@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
+import { EditableText } from '@/components/admin/EditableText';
 
 /**
  * RecentlyPublished — themed slideshow of the latest catalog additions.
@@ -212,16 +213,23 @@ export const RecentlyPublished = ({ compact = false, limit = 10 }: Props) => {
               style={{ background: colors.chip, border: '1px solid rgba(212,175,55,0.3)' }}
             >
               <Sparkles className="w-3.5 h-3.5" style={{ color: '#D4AF37' }} />
-              <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: '#D4AF37' }}>
-                Just in
-              </span>
+              <EditableText
+                keyName="recentlyPublished.eyebrow"
+                className="text-xs font-semibold tracking-wider uppercase"
+                style={{ color: '#D4AF37' }}
+              />
             </div>
             <h2 className="text-3xl md:text-5xl font-serif font-bold mb-3" style={{ color: colors.text }}>
-              Recently <span style={{ color: '#D4AF37' }}>Published</span>
+              <EditableText keyName="recentlyPublished.title" />{' '}
+              <EditableText keyName="recentlyPublished.titleAccent" style={{ color: '#D4AF37' }} />
             </h2>
-            <p className="text-sm md:text-base max-w-xl mx-auto" style={{ color: colors.muted }}>
-              The latest titles added to our catalog by the editorial team. Updated live.
-            </p>
+            <EditableText
+              keyName="recentlyPublished.subtitle"
+              as="p"
+              multiline
+              className="text-sm md:text-base max-w-xl mx-auto"
+              style={{ color: colors.muted }}
+            />
           </div>
         )}
 
@@ -229,9 +237,7 @@ export const RecentlyPublished = ({ compact = false, limit = 10 }: Props) => {
           <div className="px-4 mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4" style={{ color: '#D4AF37' }} />
-              <h2 className="font-serif font-bold text-[18px]" style={{ color: colors.text }}>
-                Recently published
-              </h2>
+              <EditableText keyName="recentlyPublished.mobileTitle" as="h2" className="font-serif font-bold text-[18px]" style={{ color: colors.text }} />
             </div>
             <button
               onClick={() => navigate('/shop')}
@@ -509,7 +515,7 @@ export const RecentlyPublished = ({ compact = false, limit = 10 }: Props) => {
                 boxShadow: '0 14px 32px rgba(212,175,55,0.32)',
               }}
             >
-              Browse the catalog <ArrowRight className="w-5 h-5" />
+              <EditableText keyName="recentlyPublished.cta" /> <ArrowRight className="w-5 h-5" />
             </button>
             <p className="mt-3 text-xs" style={{ color: colors.dim }}>
               Live feed · synced from the admin panel in real time.

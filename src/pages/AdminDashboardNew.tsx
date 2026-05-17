@@ -8,6 +8,7 @@ import { AdminOverview } from '@/components/admin/AdminOverview';
 import { ProductManager } from '@/components/admin/ProductManager';
 import { OrderManager } from '@/components/admin/OrderManager';
 import { TransactionManager } from '@/components/admin/TransactionManager';
+import { LandingEditor } from '@/components/admin/LandingEditor';
 
 const AdminDashboard = () => {
   const { user, isAdmin, loading } = useAuth();
@@ -31,6 +32,7 @@ const AdminDashboard = () => {
               <Route path="products" element={<ProductManager />} />
               <Route path="orders" element={<OrderManager />} />
               <Route path="transactions" element={<TransactionManager />} />
+              <Route path="landing-editor" element={<LandingEditor />} />
               <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
             </Routes>
           </div>

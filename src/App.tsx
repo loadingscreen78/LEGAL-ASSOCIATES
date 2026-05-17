@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./contexts/CartContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SiteContentProvider } from "./contexts/SiteContentContext";
 import { AnimatedLoader } from "./components/AnimatedLoader";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { useState, useEffect } from "react";
@@ -82,11 +83,13 @@ const App = () => {
         <TooltipProvider>
           <ThemeProvider>
             <AuthProvider>
-              <CartProvider>
-                <AppContent />
-                <Toaster />
-                <Sonner />
-              </CartProvider>
+              <SiteContentProvider>
+                <CartProvider>
+                  <AppContent />
+                  <Toaster />
+                  <Sonner />
+                </CartProvider>
+              </SiteContentProvider>
             </AuthProvider>
           </ThemeProvider>
         </TooltipProvider>

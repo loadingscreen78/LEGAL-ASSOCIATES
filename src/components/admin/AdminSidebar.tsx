@@ -7,7 +7,8 @@ import {
   CreditCard, 
   LogOut,
   ChevronLeft,
-  User
+  User,
+  Sparkles
 } from 'lucide-react';
 import {
   Sidebar,
@@ -46,6 +47,11 @@ const navItems = [
     title: 'Transactions',
     url: '/admin-dashboard/transactions',
     icon: CreditCard,
+  },
+  {
+    title: 'Landing Page',
+    url: '/admin-dashboard/landing-editor',
+    icon: Sparkles,
   },
 ];
 

@@ -2,32 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, MapPin, ChevronDown } from 'lucide-react';
+import { EditableText } from '@/components/admin/EditableText';
 
-const heroSlides = [
-  {
-    image: "/lovable-uploads/10415a62-f1ba-4604-abce-029d57d3c401.png",
-    title: "Empowering Legal Minds",
-    highlight: "Since 1980",
-    subtitle: "Your trusted partner in legal publishing, journals, and law books."
-  },
-  {
-    image: "/lovable-uploads/d90dde4b-fcdf-452e-9612-348fa7878292.png",
-    title: "Premium Legal",
-    highlight: "Publications",
-    subtitle: "Quality content for legal professionals across India"
-  },
-  {
-    image: "/lovable-uploads/20716325-0e93-4a46-bfec-60bd22b17411.png",
-    title: "Professional Legal",
-    highlight: "Resources",
-    subtitle: "Comprehensive collection for legal education and practice"
-  },
-  {
-    image: "/lovable-uploads/ea49d3b2-43d9-4804-a469-5140b187a2cd.png",
-    title: "Trusted by Legal",
-    highlight: "Professionals",
-    subtitle: "Excellence in legal education and professional development"
-  }
+const heroSlideImages = [
+  '/lovable-uploads/10415a62-f1ba-4604-abce-029d57d3c401.png',
+  '/lovable-uploads/d90dde4b-fcdf-452e-9612-348fa7878292.png',
+  '/lovable-uploads/20716325-0e93-4a46-bfec-60bd22b17411.png',
+  '/lovable-uploads/ea49d3b2-43d9-4804-a469-5140b187a2cd.png',
 ];
 
 export const HeroSection = () => {
@@ -38,7 +19,7 @@ export const HeroSection = () => {
   useEffect(() => {
     setIsVisible(true);
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % heroSlideImages.length);
     }, 6000);
     return () => clearInterval(interval);
   }, []);
@@ -50,7 +31,7 @@ export const HeroSection = () => {
   return (
     <section ref={heroRef} className="relative h-screen overflow-hidden">
       {/* Animated Background Slides */}
-      {heroSlides.map((slide, index) => (
+      {heroSlideImages.map((image, index) => (
         <div
           key={index}
           className={`absolute inset-0 transition-all duration-1500 ease-out ${
@@ -60,7 +41,7 @@ export const HeroSection = () => {
           <div 
             className="absolute inset-0 bg-cover bg-center"
             style={{ 
-              backgroundImage: `url(${slide.image})`,
+              backgroundImage: `url(${image})`,
               transform: index === currentSlide ? 'scale(1.05)' : 'scale(1)',
               transition: 'transform 8s ease-out'
             }}
@@ -99,9 +80,10 @@ export const HeroSection = () => {
               }`}
             >
               <span className="w-2 h-2 bg-[#D4AF37] rounded-full animate-pulse" />
-              <span className="text-[#D4AF37] text-sm font-medium tracking-wide">
-                Established in Cuttack, Odisha
-              </span>
+              <EditableText
+                keyName="hero.badge"
+                className="text-[#D4AF37] text-sm font-medium tracking-wide"
+              />
             </div>
 
             {/* Main Title */}
@@ -110,10 +92,10 @@ export const HeroSection = () => {
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
             >
-              {heroSlides[currentSlide].title}
+              <EditableText keyName="hero.title" />
               <br />
               <span className="text-[#D4AF37] relative">
-                {heroSlides[currentSlide].highlight}
+                <EditableText keyName="hero.titleHighlight" />
                 <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 200 8" fill="none">
                   <path d="M0 4C50 0 150 8 200 4" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" className="animate-draw-line" />
                 </svg>
@@ -126,7 +108,7 @@ export const HeroSection = () => {
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
             >
-              {heroSlides[currentSlide].subtitle}
+              <EditableText keyName="hero.subtitle" multiline />
             </p>
             
             {/* CTA Buttons */}
@@ -138,14 +120,14 @@ export const HeroSection = () => {
               <Link to="/books">
                 <Button className="group h-14 px-8 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#101820] font-bold text-lg rounded-full shadow-lg shadow-[#D4AF37]/25 hover:shadow-xl hover:shadow-[#D4AF37]/30 transition-all duration-300 hover:scale-105">
                   <BookOpen className="mr-2 w-5 h-5" />
-                  Explore Books
+                  <EditableText keyName="hero.ctaPrimary" />
                   <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link to="/visit-store">
                 <Button className="group h-14 px-8 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold text-lg rounded-full border border-white/30 hover:border-white/50 transition-all duration-300 hover:scale-105">
                   <MapPin className="mr-2 w-5 h-5" />
-                  Visit Our Store
+                  <EditableText keyName="hero.ctaSecondary" />
                 </Button>
               </Link>
             </div>
@@ -156,14 +138,14 @@ export const HeroSection = () => {
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
               }`}
             >
-              {[
-                { value: '40+', label: 'Years of Excellence' },
-                { value: '500+', label: 'Publications' },
-                { value: '10K+', label: 'Happy Customers' }
-              ].map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-[#D4AF37]">{stat.value}</div>
-                  <div className="text-sm text-gray-400 mt-1">{stat.label}</div>
+              {([
+                { vKey: 'hero.stat1.value', lKey: 'hero.stat1.label' },
+                { vKey: 'hero.stat2.value', lKey: 'hero.stat2.label' },
+                { vKey: 'hero.stat3.value', lKey: 'hero.stat3.label' },
+              ]).map((stat) => (
+                <div key={stat.vKey} className="text-center">
+                  <EditableText keyName={stat.vKey} as="div" className="text-3xl md:text-4xl font-bold text-[#D4AF37]" />
+                  <EditableText keyName={stat.lKey} as="div" className="text-sm text-gray-400 mt-1" />
                 </div>
               ))}
             </div>
@@ -173,7 +155,7 @@ export const HeroSection = () => {
 
       {/* Slide Indicators */}
       <div className="absolute right-8 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-20">
-        {heroSlides.map((_, index) => (
+        {heroSlideImages.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
@@ -191,7 +173,7 @@ export const HeroSection = () => {
         onClick={scrollToContent}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/60 hover:text-white transition-colors cursor-pointer group"
       >
-        <span className="text-xs tracking-widest uppercase">Scroll</span>
+        <EditableText keyName="hero.scroll" className="text-xs tracking-widest uppercase" />
         <ChevronDown className="w-5 h-5 animate-bounce" />
       </button>
     </section>

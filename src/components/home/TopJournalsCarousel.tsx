@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, BookOpen, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useProducts } from '@/hooks/useProducts';
+import { EditableText } from '@/components/admin/EditableText';
 
 export const TopJournalsCarousel = () => {
   const { theme } = useTheme();
@@ -130,14 +131,13 @@ export const TopJournalsCarousel = () => {
         <div className="text-center mb-16 relative">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
             <BookOpen className="w-4 h-4" style={{ color: '#D4AF37' }} />
-            <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>Featured Publications</span>
+            <EditableText keyName="topJournals.eyebrow" className="text-sm font-medium" style={{ color: '#D4AF37' }} />
           </div>
           <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4" style={{ color: colors.text }}>
-            Top Legal <span style={{ color: '#D4AF37' }}>Journals</span>
+            <EditableText keyName="topJournals.title" />{' '}
+            <EditableText keyName="topJournals.titleAccent" style={{ color: '#D4AF37' }} />
           </h2>
-          <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.textMuted }}>
-            Discover our {journals.length} latest legal journals trusted by professionals nationwide
-          </p>
+          <EditableText keyName="topJournals.subtitle" as="p" multiline className="text-lg max-w-2xl mx-auto" style={{ color: colors.textMuted }} />
         </div>
 
         <div className="relative h-[500px] md:h-[550px]" onMouseEnter={() => setIsAutoPlaying(false)} onMouseLeave={() => setIsAutoPlaying(true)}>
@@ -297,7 +297,7 @@ export const TopJournalsCarousel = () => {
               boxShadow: isDark ? '0 4px 20px rgba(212, 175, 55, 0.3)' : '0 4px 20px rgba(45, 62, 80, 0.3)' 
             }}
           >
-            Browse All Journals <ArrowRight className="w-5 h-5" />
+            <EditableText keyName="topJournals.cta" /> <ArrowRight className="w-5 h-5" />
           </button>
         </div>
       </div>
