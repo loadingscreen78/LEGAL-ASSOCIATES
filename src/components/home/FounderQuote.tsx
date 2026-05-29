@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Quote, Award, BookOpen, Users, ArrowRight, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { EditableText } from '@/components/admin/EditableText';
 
 export const FounderQuote = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -27,9 +28,9 @@ export const FounderQuote = () => {
   };
 
   const achievements = [
-    { icon: BookOpen, value: '500+', label: 'Publications' },
-    { icon: Users, value: '50K+', label: 'Readers' },
-    { icon: Award, value: '40+', label: 'Years' },
+    { icon: BookOpen, vKey: 'fq.stat1.value', lKey: 'fq.stat1.label' },
+    { icon: Users,    vKey: 'fq.stat2.value', lKey: 'fq.stat2.label' },
+    { icon: Award,    vKey: 'fq.stat3.value', lKey: 'fq.stat3.label' },
   ];
 
   return (
@@ -88,13 +89,13 @@ export const FounderQuote = () => {
                 <div className="absolute -bottom-4 -left-4 px-4 py-3 rounded-xl animate-float" style={{ background: '#FFFFFF', boxShadow: '0 10px 40px rgba(0,0,0,0.2)', animationDelay: '1s' }}>
                   <div className="flex items-center gap-2">
                     <Star className="w-5 h-5" style={{ color: '#D4AF37', fill: '#D4AF37' }} />
-                    <span className="font-bold" style={{ color: '#2D3E50' }}>40+ Years</span>
+                    <EditableText keyName="fq.badge.years" className="font-bold" style={{ color: '#2D3E50' }} />
                   </div>
                 </div>
 
                 {/* Name Badge */}
                 <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-8 py-3 rounded-full whitespace-nowrap" style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #c9a030 100%)', boxShadow: '0 10px 30px rgba(212, 175, 55, 0.4)' }}>
-                  <span className="font-bold" style={{ color: '#101820' }}>Founder & Publisher</span>
+                  <EditableText keyName="fq.badge.title" className="font-bold" style={{ color: '#101820' }} />
                 </div>
               </div>
             </div>
@@ -104,24 +105,25 @@ export const FounderQuote = () => {
               {/* Section Label */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8" style={{ background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
                 <Quote className="w-4 h-4" style={{ color: '#D4AF37' }} />
-                <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>Founder's Vision</span>
+                <EditableText keyName="fq.eyebrow" className="text-sm font-medium" style={{ color: '#D4AF37' }} />
               </div>
 
               {/* Quote */}
               <div className="relative mb-8">
                 <Quote className="absolute -top-4 -left-4 w-16 h-16 opacity-20" style={{ color: '#D4AF37' }} />
-                <blockquote className="text-2xl md:text-3xl lg:text-4xl font-serif leading-relaxed relative z-10" style={{ color: '#FFFFFF' }}>
-                  Our mission is to empower legal professionals with
-                  <span style={{ color: '#D4AF37' }}> quality publications </span>
-                  that stand the test of time and contribute to the
-                  <span style={{ color: '#D4AF37' }}> advancement of justice</span>.
-                </blockquote>
+                <EditableText
+                  keyName="fq.quote"
+                  as="blockquote"
+                  multiline
+                  className="text-2xl md:text-3xl lg:text-4xl font-serif leading-relaxed relative z-10"
+                  style={{ color: '#FFFFFF' }}
+                />
               </div>
 
               {/* Author Info */}
               <div className="mb-10">
-                <h3 className="text-2xl font-serif font-bold mb-2" style={{ color: '#FFFFFF' }}>Akshaya Kumar Mohanty</h3>
-                <p className="text-lg" style={{ color: '#D4AF37' }}>Founder & Chief Publisher</p>
+                <EditableText keyName="fq.author" as="h3" className="text-2xl font-serif font-bold mb-2" style={{ color: '#FFFFFF' }} />
+                <EditableText keyName="fq.role" as="p" className="text-lg" style={{ color: '#D4AF37' }} />
               </div>
 
               {/* Achievement Stats */}
@@ -131,8 +133,8 @@ export const FounderQuote = () => {
                   return (
                     <div key={index} className="text-center p-4 rounded-xl transition-all duration-300 hover:scale-105" style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                       <Icon className="w-6 h-6 mx-auto mb-2" style={{ color: '#D4AF37' }} />
-                      <div className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>{item.value}</div>
-                      <div className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }}>{item.label}</div>
+                      <EditableText keyName={item.vKey} as="div" className="text-2xl font-bold" style={{ color: '#FFFFFF' }} />
+                      <EditableText keyName={item.lKey} as="div" className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.6)' }} />
                     </div>
                   );
                 })}
@@ -140,7 +142,7 @@ export const FounderQuote = () => {
 
               {/* CTA Button */}
               <Link to="/founder" className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-semibold transition-all duration-300 hover:scale-105 group" style={{ background: '#D4AF37', color: '#101820', boxShadow: '0 10px 40px rgba(212, 175, 55, 0.3)' }}>
-                Read Full Story
+                <EditableText keyName="fq.cta" />
                 <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
               </Link>
             </div>

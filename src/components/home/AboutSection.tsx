@@ -1,32 +1,54 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Phone, Mail, MapPin, Award, Users, BookOpen, Scale, ArrowRight, Clock, Target, Sparkles, Rocket, Globe, Send } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { CONTACT_EMAIL, CONTACT_PHONE, CONTACT_PHONE_OFFICE, buildContactMailto } from '@/lib/contactMail';
+import { EditableText } from '@/components/admin/EditableText';
+import { useSiteContent } from '@/contexts/SiteContentContext';
 
-const timelineEvents = [
-  { year: '1980', title: 'The Beginning', description: 'Founded a small bookstore in Cuttack with just 50 law books and a vision to serve legal professionals', icon: Sparkles, color: '#D4AF37' },
-  { year: '1992', title: 'First Publication', description: 'Published our first legal commentary on Odisha laws, marking our entry into publishing', icon: BookOpen, color: '#3B82F6' },
-  { year: '2005', title: 'Major Expansion', description: 'Expanded to cover all major areas of Indian law with 500+ titles in our catalog', icon: Target, color: '#10B981' },
-  { year: '2015', title: 'Digital Revolution', description: 'Launched online presence and digital catalog reaching customers across India', icon: Globe, color: '#8B5CF6' },
-  { year: '2024', title: 'Modern Era', description: 'State-of-the-art e-commerce platform with 50,000+ satisfied customers nationwide', icon: Rocket, color: '#EC4899' },
-];
+/**
+ * AboutSection — home page block. Every visible string is sourced from
+ * `site_content` via `<EditableText>` so admins can rewrite the page from
+ * the landing editor without code edits.
+ *
+ * Visual seeds (icons, colours) stay in code; admin-editable strings live
+ * under the `about.journey.*`, `about.stat*`, `about.visit.*` keys.
+ */
 
-const bentoItems = [
-  { icon: Award, value: '40+', label: 'Years of Excellence', description: 'Trusted since 1980', size: 'large' },
-  { icon: BookOpen, value: '500+', label: 'Publications', description: 'Legal literature', size: 'small' },
-  { icon: Users, value: '50K+', label: 'Happy Customers', description: 'Across India', size: 'small' },
-  { icon: Scale, value: '100%', label: 'Quality Assured', description: 'Expert reviewed', size: 'medium' },
-];
+const journeySeeds = [
+  { keyBase: 'about.journey.m1', icon: Sparkles, color: '#D4AF37' },
+  { keyBase: 'about.journey.m2', icon: BookOpen, color: '#3B82F6' },
+  { keyBase: 'about.journey.m3', icon: Target,   color: '#10B981' },
+  { keyBase: 'about.journey.m4', icon: Globe,    color: '#8B5CF6' },
+  { keyBase: 'about.journey.m5', icon: Rocket,   color: '#EC4899' },
+] as const;
+
+const bentoSeeds = [
+  { icon: Award,    keyBase: 'about.stat1', size: 'large' },
+  { icon: BookOpen, keyBase: 'about.stat2', size: 'small' },
+  { icon: Users,    keyBase: 'about.stat3', size: 'small' },
+  { icon: Scale,    keyBase: 'about.stat4', size: 'medium' },
+] as const;
 
 export const AboutSection = () => {
   const { theme } = useTheme();
+  const { t } = useSiteContent();
   const isDark = theme === 'dark';
   const [isVisible, setIsVisible] = useState(false);
   const [activeTimeline, setActiveTimeline] = useState(0);
   const [hoveredBento, setHoveredBento] = useState<number | null>(null);
   const [hoveredTimeline, setHoveredTimeline] = useState<number | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
+
+  const journey = useMemo(
+    () => journeySeeds.map((s) => ({
+      ...s,
+      year:        t(`${s.keyBase}.year`),
+      title:       t(`${s.keyBase}.title`),
+      description: t(`${s.keyBase}.description`),
+    })),
+    [t]
+  );
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -38,12 +60,11 @@ export const AboutSection = () => {
 
   useEffect(() => {
     if (isVisible) {
-      const interval = setInterval(() => setActiveTimeline((prev) => (prev + 1) % timelineEvents.length), 4000);
+      const interval = setInterval(() => setActiveTimeline((p) => (p + 1) % journeySeeds.length), 4000);
       return () => clearInterval(interval);
     }
   }, [isVisible]);
 
-  // Theme-aware colors
   const colors = {
     bg: isDark ? '#101820' : '#F8F9FA',
     cardBg: isDark ? '#1a2a3a' : '#FFFFFF',
@@ -55,7 +76,6 @@ export const AboutSection = () => {
 
   return (
     <section ref={sectionRef} className="py-32 relative overflow-hidden" style={{ background: colors.bg }}>
-      {/* Background Elements */}
       <div className="absolute top-0 left-0 w-full h-1" style={{ background: 'linear-gradient(90deg, transparent, #D4AF37, transparent)' }} />
       <div className="absolute top-40 right-0 w-96 h-96 rounded-full opacity-30" style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.2) 0%, transparent 70%)' }} />
       <div className="absolute bottom-40 left-0 w-64 h-64 rounded-full opacity-30" style={{ background: isDark ? 'radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(45, 62, 80, 0.1) 0%, transparent 70%)' }} />
@@ -65,19 +85,18 @@ export const AboutSection = () => {
         <div className={`text-center mb-20 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6" style={{ background: 'rgba(212, 175, 55, 0.1)', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
             <Scale className="w-4 h-4" style={{ color: '#D4AF37' }} />
-            <span className="text-sm font-medium" style={{ color: '#D4AF37' }}>About Us</span>
+            <EditableText keyName="about.eyebrow" className="text-sm font-medium" style={{ color: '#D4AF37' }} />
           </div>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-6" style={{ color: colors.text }}>
-            Legal <span style={{ color: '#D4AF37' }}>Associates</span>
+            <EditableText keyName="about.title" />{' '}
+            <EditableText keyName="about.titleAccent" style={{ color: '#D4AF37' }} />
           </h2>
-          <p className="text-lg max-w-2xl mx-auto" style={{ color: colors.textMuted }}>
-            A cornerstone of legal education and professional development in India since 1980
-          </p>
+          <EditableText keyName="about.subtitle" as="p" multiline className="text-lg max-w-2xl mx-auto" style={{ color: colors.textMuted }} />
         </div>
 
         {/* Bento Grid */}
         <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-32 transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          {bentoItems.map((item, index) => {
+          {bentoSeeds.map((item, index) => {
             const Icon = item.icon;
             const isLarge = item.size === 'large';
             const isMedium = item.size === 'medium';
@@ -98,27 +117,42 @@ export const AboutSection = () => {
                 <div className={`${isLarge ? 'w-16 h-16' : 'w-12 h-12'} rounded-2xl flex items-center justify-center mb-4 transition-all duration-300`} style={{ background: isHovered ? 'rgba(212, 175, 55, 0.3)' : 'rgba(212, 175, 55, 0.15)' }}>
                   <Icon className={`${isLarge ? 'w-8 h-8' : 'w-6 h-6'}`} style={{ color: '#D4AF37' }} />
                 </div>
-                <div className={`${isLarge ? 'text-5xl md:text-6xl' : 'text-3xl md:text-4xl'} font-bold mb-2 transition-colors duration-300`} style={{ color: isHovered ? (isDark ? '#101820' : '#FFFFFF') : colors.text }}>{item.value}</div>
-                <div className={`${isLarge ? 'text-xl' : 'text-lg'} font-semibold mb-1 transition-colors duration-300`} style={{ color: '#D4AF37' }}>{item.label}</div>
-                <p className="text-sm transition-colors duration-300" style={{ color: isHovered ? (isDark ? 'rgba(16,24,32,0.7)' : 'rgba(255,255,255,0.7)') : colors.textMuted }}>{item.description}</p>
+                <EditableText
+                  keyName={`${item.keyBase}.value`}
+                  as="div"
+                  className={`${isLarge ? 'text-5xl md:text-6xl' : 'text-3xl md:text-4xl'} font-bold mb-2 transition-colors duration-300`}
+                  style={{ color: isHovered ? (isDark ? '#101820' : '#FFFFFF') : colors.text }}
+                />
+                <EditableText
+                  keyName={`${item.keyBase}.label`}
+                  as="div"
+                  className={`${isLarge ? 'text-xl' : 'text-lg'} font-semibold mb-1 transition-colors duration-300`}
+                  style={{ color: '#D4AF37' }}
+                />
+                <EditableText
+                  keyName={`${item.keyBase}.description`}
+                  as="p"
+                  className="text-sm transition-colors duration-300"
+                  style={{ color: isHovered ? (isDark ? 'rgba(16,24,32,0.7)' : 'rgba(255,255,255,0.7)') : colors.textMuted }}
+                />
                 {isLarge && <div className="absolute bottom-6 right-6 w-24 h-24 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />}
               </div>
             );
           })}
         </div>
 
-        {/* Interactive Curved Timeline */}
+        {/* Journey Timeline */}
         <div className={`mb-32 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="text-center mb-16">
             <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4" style={{ color: colors.text }}>
-              Our Journey <span style={{ color: '#D4AF37' }}>Through Time</span>
+              <EditableText keyName="about.journey.title" />{' '}
+              <EditableText keyName="about.journey.titleAccent" style={{ color: '#D4AF37' }} />
             </h3>
-            <p style={{ color: colors.textMuted }}>Four decades of excellence in legal publishing</p>
+            <EditableText keyName="about.journey.subtitle" as="p" style={{ color: colors.textMuted }} />
           </div>
 
           {/* Desktop Curved Timeline */}
           <div className="hidden lg:block relative" style={{ minHeight: '500px' }}>
-            {/* SVG Curved Path */}
             <svg className="absolute inset-0 w-full h-full" viewBox="0 0 1200 500" preserveAspectRatio="none">
               <defs>
                 <linearGradient id="curveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -131,31 +165,22 @@ export const AboutSection = () => {
                   <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
                 </filter>
               </defs>
-              
-              {/* Main Curved Path */}
               <path
                 d="M 50,250 C 200,100 300,400 500,250 C 700,100 800,400 1000,250 C 1100,180 1150,250 1150,250"
-                stroke="url(#curveGradient)"
-                strokeWidth="4"
-                fill="none"
-                strokeLinecap="round"
-                filter="url(#glow)"
+                stroke="url(#curveGradient)" strokeWidth="4" fill="none" strokeLinecap="round" filter="url(#glow)"
               />
-              
-              {/* Animated Particle */}
               <circle r="8" fill="#D4AF37" filter="url(#glow)">
                 <animateMotion dur="10s" repeatCount="indefinite" path="M 50,250 C 200,100 300,400 500,250 C 700,100 800,400 1000,250 C 1100,180 1150,250 1150,250" />
               </circle>
             </svg>
 
-            {/* Timeline Points */}
-            {timelineEvents.map((event, index) => {
+            {journey.map((event, index) => {
               const Icon = event.icon;
               const isActive = activeTimeline === index;
               const isHovered = hoveredTimeline === index;
-              
+
               const positions = [
-                { x: '8%', y: '50%', cardY: '70%' },
+                { x: '8%',  y: '50%', cardY: '70%' },
                 { x: '28%', y: '20%', cardY: '35%' },
                 { x: '48%', y: '70%', cardY: '0%' },
                 { x: '68%', y: '25%', cardY: '40%' },
@@ -164,7 +189,6 @@ export const AboutSection = () => {
 
               return (
                 <div key={index}>
-                  {/* Milestone Point */}
                   <div
                     className="absolute cursor-pointer transition-all duration-500 z-20"
                     style={{ left: positions[index].x, top: positions[index].y, transform: 'translate(-50%, -50%)' }}
@@ -172,12 +196,9 @@ export const AboutSection = () => {
                     onMouseLeave={() => setHoveredTimeline(null)}
                     onClick={() => setActiveTimeline(index)}
                   >
-                    {/* Pulse Ring */}
                     {(isActive || isHovered) && (
                       <div className="absolute inset-0 rounded-full animate-ping" style={{ width: '70px', height: '70px', background: `${event.color}30`, transform: 'translate(-50%, -50%) translate(35px, 35px)' }} />
                     )}
-                    
-                    {/* Circle */}
                     <div
                       className="relative rounded-full flex items-center justify-center transition-all duration-500"
                       style={{
@@ -190,14 +211,11 @@ export const AboutSection = () => {
                     >
                       <Icon style={{ width: isActive || isHovered ? '32px' : '26px', height: isActive || isHovered ? '32px' : '26px', color: isActive || isHovered ? '#FFFFFF' : event.color }} />
                     </div>
-                    
-                    {/* Year */}
                     <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 font-bold text-lg whitespace-nowrap" style={{ color: isActive || isHovered ? event.color : colors.textMuted }}>
-                      {event.year}
+                      <EditableText keyName={`${event.keyBase}.year`} />
                     </div>
                   </div>
 
-                  {/* Content Card */}
                   <div
                     className="absolute transition-all duration-500 z-10"
                     style={{
@@ -216,8 +234,19 @@ export const AboutSection = () => {
                         borderLeft: `4px solid ${event.color}`
                       }}
                     >
-                      <h4 className="font-serif font-bold text-xl mb-2" style={{ color: isActive || isHovered ? '#FFFFFF' : colors.text }}>{event.title}</h4>
-                      <p className="text-sm leading-relaxed" style={{ color: isActive || isHovered ? 'rgba(255,255,255,0.8)' : colors.textMuted }}>{event.description}</p>
+                      <EditableText
+                        keyName={`${event.keyBase}.title`}
+                        as="h4"
+                        className="font-serif font-bold text-xl mb-2"
+                        style={{ color: isActive || isHovered ? '#FFFFFF' : colors.text }}
+                      />
+                      <EditableText
+                        keyName={`${event.keyBase}.description`}
+                        as="p"
+                        multiline
+                        className="text-sm leading-relaxed"
+                        style={{ color: isActive || isHovered ? 'rgba(255,255,255,0.8)' : colors.textMuted }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -225,14 +254,13 @@ export const AboutSection = () => {
             })}
           </div>
 
-          {/* Mobile Timeline */}
+          {/* Mobile timeline */}
           <div className="lg:hidden relative pl-20">
             <svg className="absolute left-8 top-0 w-4 h-full" viewBox="0 0 16 100" preserveAspectRatio="none">
               <path d="M 8,0 Q 2,25 8,50 Q 14,75 8,100" stroke="#D4AF37" strokeWidth="3" fill="none" strokeLinecap="round" />
             </svg>
-            
             <div className="space-y-8">
-              {timelineEvents.map((event, index) => {
+              {journey.map((event, index) => {
                 const Icon = event.icon;
                 const isActive = activeTimeline === index;
                 return (
@@ -242,10 +270,10 @@ export const AboutSection = () => {
                     </div>
                     <div className="p-5 rounded-2xl transition-all duration-300" style={{ background: isActive ? (isDark ? '#1a2a3a' : '#2D3E50') : colors.cardBg, boxShadow: isActive ? '0 15px 30px rgba(0,0,0,0.2)' : isDark ? '0 4px 15px rgba(0,0,0,0.2)' : '0 4px 15px rgba(0,0,0,0.05)', borderLeft: `4px solid ${event.color}` }}>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="font-bold text-lg" style={{ color: event.color }}>{event.year}</span>
+                        <EditableText keyName={`${event.keyBase}.year`} as="span" className="font-bold text-lg" style={{ color: event.color }} />
                       </div>
-                      <h4 className="font-serif font-bold text-lg mb-2" style={{ color: isActive ? '#FFFFFF' : colors.text }}>{event.title}</h4>
-                      <p className="text-sm" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : colors.textMuted }}>{event.description}</p>
+                      <EditableText keyName={`${event.keyBase}.title`} as="h4" className="font-serif font-bold text-lg mb-2" style={{ color: isActive ? '#FFFFFF' : colors.text }} />
+                      <EditableText keyName={`${event.keyBase}.description`} as="p" multiline className="text-sm" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : colors.textMuted }} />
                     </div>
                   </div>
                 );
@@ -253,9 +281,8 @@ export const AboutSection = () => {
             </div>
           </div>
 
-          {/* Navigation Dots */}
           <div className="flex justify-center gap-3 mt-12">
-            {timelineEvents.map((event, index) => (
+            {journey.map((event, index) => (
               <button key={index} onClick={() => setActiveTimeline(index)} className="relative transition-all duration-300" style={{ width: activeTimeline === index ? '40px' : '12px', height: '12px', borderRadius: '6px', background: activeTimeline === index ? event.color : isDark ? 'rgba(255,255,255,0.2)' : 'rgba(45, 62, 80, 0.2)' }}>
                 {activeTimeline === index && <span className="absolute inset-0 rounded-full animate-ping" style={{ background: `${event.color}40` }} />}
               </button>
@@ -263,18 +290,19 @@ export const AboutSection = () => {
           </div>
         </div>
 
-        {/* Contact Card */}
+        {/* Visit-store contact card */}
         <div className={`relative overflow-hidden rounded-3xl p-8 md:p-12 transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`} style={{ background: 'linear-gradient(135deg, #2D3E50 0%, #101820 100%)' }}>
-          <div className="absolute inset-0 opacity-10" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` }} />
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{ background: 'radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%)' }} />
-
           <div className="relative z-10 grid md:grid-cols-2 gap-8 items-center">
             <div>
-              <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4" style={{ color: '#FFFFFF' }}>Visit Our <span style={{ color: '#D4AF37' }}>Store</span></h3>
-              <p className="mb-6" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>Experience our extensive collection of legal publications in person, or write to us anytime — we read every message.</p>
+              <h3 className="text-3xl md:text-4xl font-serif font-bold mb-4" style={{ color: '#FFFFFF' }}>
+                <EditableText keyName="about.visit.title" />{' '}
+                <EditableText keyName="about.visit.titleAccent" style={{ color: '#D4AF37' }} />
+              </h3>
+              <EditableText keyName="about.visit.subtitle" as="p" multiline className="mb-6" style={{ color: 'rgba(255, 255, 255, 0.7)' }} />
               <div className="flex flex-wrap items-center gap-3">
                 <Link to="/shop" className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition-all duration-300 hover:scale-105" style={{ background: '#D4AF37', color: '#101820' }}>
-                  Browse Collection <ArrowRight className="w-5 h-5" />
+                  <EditableText keyName="about.visit.cta" /> <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a
                   href={buildContactMailto('general')}
@@ -282,7 +310,7 @@ export const AboutSection = () => {
                   style={{ background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.4)', color: '#D4AF37' }}
                   title="Send us an email — opens your mail client with a prefilled message"
                 >
-                  <Send className="w-4 h-4" /> Send us a message
+                  <Send className="w-4 h-4" /> <EditableText keyName="about.visit.contactBtn" />
                 </a>
               </div>
             </div>
@@ -291,7 +319,7 @@ export const AboutSection = () => {
                 { icon: MapPin, title: 'Location', text: 'High Court Road, Cuttack – 753002, Odisha', href: 'https://maps.google.com/?q=High+Court+Road+Cuttack+753002' },
                 { icon: Phone,  title: 'Phone',    text: `${CONTACT_PHONE_OFFICE} · ${CONTACT_PHONE}`, href: `tel:${CONTACT_PHONE_OFFICE.replace(/[^\d+]/g, '')}` },
                 { icon: Mail,   title: 'Email',    text: CONTACT_EMAIL, href: buildContactMailto('general') },
-                { icon: Clock,  title: 'Hours',    text: 'Mon–Sat · 10:00 AM – 8:00 PM' },
+                { icon: Clock,  title: 'Hours',    text: t('about.visit.hours') },
               ].map((item, index) => {
                 const Icon = item.icon;
                 const inner = (
