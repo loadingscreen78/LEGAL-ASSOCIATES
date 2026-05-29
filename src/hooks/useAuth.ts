@@ -8,6 +8,7 @@ import {
   clearLocalAdminSession,
   checkLocalAdmin,
   LOCAL_ADMIN,
+  ADMIN_BACKING,
   LocalAdminSession,
 } from '@/lib/localAdmin';
 
@@ -155,7 +156,33 @@ export const useAuth = () => {
         writeLocalAdminSession(LOCAL_ADMIN.id);
         const localSession = readLocalAdminSession()!;
         const localUser = makeLocalAdminUser(localSession);
-        setSession(null);
+
+        // Also sign into Supabase with the BACKING admin account so that
+        // auth.uid() is set on every subsequent request and RLS policies
+        // that call public.is_admin() return TRUE. If the backing account
+        // doesn't exist or the password is wrong we still let the local
+        // admin in (so the UI is usable), but writes will be blocked by
+        // RLS until the backing account is created — that's the intended
+        // behaviour: the front-end gate works regardless, the database
+        // gate stays strict.
+        try {
+          const { error: backingError } = await supabase.auth.signInWithPassword({
+            email: ADMIN_BACKING.email,
+            password: ADMIN_BACKING.password,
+          });
+          if (backingError) {
+            console.warn(
+              '[admin] Backing Supabase login failed — admin can browse but writes will hit RLS until the backing account exists. Reason:',
+              backingError.message
+            );
+          }
+        } catch (e) {
+          console.warn('[admin] Backing Supabase login threw, continuing as local admin only:', e);
+        }
+
+        // Hydrate React state with the synthetic admin record so the rest
+        // of the app sees isAdmin=true regardless of whether the backing
+        // login above succeeded.
         setUser(localUser);
         setProfile(makeLocalAdminProfile(localSession));
         setAdminUser(makeLocalAdminRecord(localSession));

@@ -16,6 +16,36 @@ export const LOCAL_ADMIN = {
   code: '143737',
 } as const;
 
+/**
+ * Backing Supabase admin account.
+ *
+ * When the local-admin pair above is entered, the app *also* signs into
+ * Supabase with these credentials so that:
+ *   - auth.uid() is set on every DB request,
+ *   - RLS policies that rely on public.is_admin() return TRUE,
+ *   - therefore admin writes (site_content, products, orders) succeed.
+ *
+ * Required setup (one-time):
+ *   1. In Supabase → Authentication → Users → "Add user" → create
+ *      admin@legalassociatesodisha.com with the password below.
+ *   2. SQL editor → run:
+ *        INSERT INTO public.admin_users (user_id, admin_level)
+ *        SELECT id, 'super_admin' FROM auth.users
+ *        WHERE email = 'admin@legalassociatesodisha.com'
+ *        ON CONFLICT (user_id) DO UPDATE SET admin_level = 'super_admin';
+ *   3. (Optional) Override these defaults via Vercel env vars
+ *        VITE_ADMIN_BACKING_EMAIL, VITE_ADMIN_BACKING_PASSWORD,
+ *      then redeploy without cache.
+ */
+export const ADMIN_BACKING = {
+  email:
+    (import.meta.env.VITE_ADMIN_BACKING_EMAIL as string | undefined) ||
+    'admin@legalassociatesodisha.com',
+  password:
+    (import.meta.env.VITE_ADMIN_BACKING_PASSWORD as string | undefined) ||
+    'LegalAssociates2#Admin',
+} as const;
+
 /** localStorage key used to persist the bypass session. */
 export const LOCAL_ADMIN_KEY = 'la_local_admin_session';
 
