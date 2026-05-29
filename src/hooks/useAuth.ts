@@ -195,6 +195,16 @@ export const useAuth = () => {
         password,
       });
 
+      // Anything that lands here is a regular user login (not the local
+      // admin bypass). If a stale local-admin token is sitting in
+      // localStorage from a previous session we MUST clear it now,
+      // otherwise the auth-state listener short-circuits and React keeps
+      // showing the admin pill / admin dashboard for the new user.
+      if (data?.session) {
+        clearLocalAdminSession();
+        setAdminUser(null);
+      }
+
       if (error) {
         // Supabase returns the generic "Invalid login credentials" for both
         // wrong-password AND unconfirmed-email. Rewrite the message so the UI
@@ -284,6 +294,11 @@ export const useAuth = () => {
 
   const signUp = async (email: string, password: string, userData?: Partial<Profile>) => {
     try {
+      // Same reasoning as signIn: a fresh sign-up must never inherit a
+      // stale local-admin session that was left in localStorage.
+      clearLocalAdminSession();
+      setAdminUser(null);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -367,18 +382,34 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      // Clear any local-admin bypass session first
-      const hadLocal = !!readLocalAdminSession();
+      // Order matters: drop the local-admin token first so the auth-state
+      // listener (which short-circuits while a local-admin session exists)
+      // is allowed to actually run when supabase fires SIGNED_OUT.
       clearLocalAdminSession();
-      if (hadLocal) {
-        setUser(null);
-        setProfile(null);
-        setAdminUser(null);
-      }
+
+      // Sign out of Supabase. We don't await the listener here — it'll fire
+      // asynchronously and our explicit state reset below covers the gap.
       const { error } = await supabase.auth.signOut();
+
+      // Hard-clear every piece of auth-derived state, regardless of which
+      // session the user was on (local admin, real Supabase, or both).
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setAdminUser(null);
+      setLoading(false);
+
       return { error };
     } catch (error: any) {
       console.error('Sign out error:', error);
+      // Even if the network call failed, ensure the UI doesn't keep the
+      // user in a logged-in state.
+      clearLocalAdminSession();
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      setAdminUser(null);
+      setLoading(false);
       return { error };
     }
   };
