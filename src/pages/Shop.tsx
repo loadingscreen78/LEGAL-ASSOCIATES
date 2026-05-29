@@ -4,17 +4,16 @@ import { Footer } from '@/components/Footer';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Search, ShoppingCart, Star, Package, Sparkles, Grid, List } from 'lucide-react';
+import { Search, ShoppingCart, Star, Package, Sparkles, Grid, List, Loader2 } from 'lucide-react';
 import { MobileShop } from '@/components/mobile/MobileShop';
 
-const fallbackData = [
-  { id: 'shop-1', title: "Complete Criminal Law Set", category: "Bundle", price: 2999, originalPrice: 4500, image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop", description: "Comprehensive set including IPC, CrPC, and Evidence Act", rating: 4.9, inStock: true, bestseller: true },
-  { id: 'shop-2', title: "Civil Law Master Collection", category: "Bundle", price: 3499, originalPrice: 5200, image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=500&fit=crop", description: "Complete civil law collection with CPC and Contract Act", rating: 4.8, inStock: true, featured: true },
-  { id: 'shop-3', title: "Odisha Legal Practice Guide", category: "Specialty", price: 1299, originalPrice: 1699, image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=500&fit=crop", description: "Essential guide for practicing law in Odisha courts", rating: 4.7, inStock: true, newArrival: true },
-  { id: 'shop-4', title: "Constitutional Law Essentials", category: "Core", price: 899, originalPrice: 1199, image: "https://images.unsplash.com/photo-1589829545856-d10d85525114?w=400&h=500&fit=crop", description: "Must-have constitutional law reference", rating: 4.6, inStock: true },
-  { id: 'shop-5', title: "Family & Personal Laws", category: "Specialty", price: 699, originalPrice: 899, image: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=400&h=500&fit=crop", description: "Comprehensive coverage of all personal laws", rating: 4.5, inStock: true },
-  { id: 'shop-6', title: "Tax Law Complete Guide", category: "Specialty", price: 1099, originalPrice: 1399, image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=500&fit=crop", description: "Updated tax laws with GST provisions", rating: 4.4, inStock: false },
-];
+/**
+ * Shop renders ONLY real products from Supabase. No mock data, no fallback
+ * Unsplash placeholders. If the catalog is empty (or the network fails),
+ * the visitor sees a clear empty / loading state instead of fake titles
+ * the merchant doesn't actually sell.
+ */
+const PLACEHOLDER_IMG = '/lovable-uploads/bd9562f0-5286-4441-82a0-f16eac646a5f.png';
 
 const Shop = () => {
   const { theme } = useTheme();
@@ -26,13 +25,25 @@ const Shop = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [hoveredProduct, setHoveredProduct] = useState<string | null>(null);
   const { addToCart } = useCart();
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
 
-  const shopData = products.length > 0 ? products.map(p => ({
-    id: p.id, title: p.title, category: p.category || 'books', price: p.price, originalPrice: p.price * 1.3,
-    image: p.image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
-    description: p.description || '', rating: 4.5, inStock: p.stock > 0, bestseller: false, featured: false, newArrival: false
-  })) : fallbackData;
+  // Map raw products into the display shape this page uses. We deliberately
+  // do NOT pre-seed any fallback titles — when products is empty the UI
+  // shows a clean empty state.
+  const shopData = products.map((p) => ({
+    id: p.id,
+    title: p.title,
+    category: p.category || 'books',
+    price: p.price,
+    originalPrice: p.price * 1.3,
+    image: p.image_url && p.image_url.trim() ? p.image_url : PLACEHOLDER_IMG,
+    description: p.description || '',
+    rating: 4.5,
+    inStock: p.stock > 0,
+    bestseller: false,
+    featured: false,
+    newArrival: false,
+  }));
 
   const categories = ['All', 'books', 'journals', 'Bundle', 'Specialty', 'Core'];
   const sortOptions = [{ value: 'featured', label: 'Featured' }, { value: 'name', label: 'Name' }, { value: 'price-low', label: 'Price: Low to High' }, { value: 'price-high', label: 'Price: High to Low' }];
@@ -185,12 +196,25 @@ const Shop = () => {
             ))}
           </div>
 
-          {filteredProducts.length === 0 && (
+          {loading && shopData.length === 0 ? (
+            <div className="text-center py-16">
+              <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin" style={{ color: '#D4AF37' }} />
+              <p className="text-base" style={{ color: colors.textMuted }}>Loading the catalog…</p>
+            </div>
+          ) : shopData.length === 0 ? (
             <div className="text-center py-16">
               <Package className="w-16 h-16 mx-auto mb-4" style={{ color: colors.textMuted }} />
-              <p className="text-xl" style={{ color: colors.textMuted }}>No products found</p>
+              <p className="text-xl mb-2" style={{ color: colors.text }}>The catalog is being prepared</p>
+              <p className="text-sm max-w-md mx-auto" style={{ color: colors.textMuted }}>
+                Our team is uploading the latest legal publications. Check back soon, or call us at +91 94370 19131 for direct orders.
+              </p>
             </div>
-          )}
+          ) : filteredProducts.length === 0 ? (
+            <div className="text-center py-16">
+              <Package className="w-16 h-16 mx-auto mb-4" style={{ color: colors.textMuted }} />
+              <p className="text-xl" style={{ color: colors.textMuted }}>No products match your search</p>
+            </div>
+          ) : null}
         </div>
       </main>
 

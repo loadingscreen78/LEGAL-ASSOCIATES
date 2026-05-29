@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Navigation } from '@/components/Navigation';
 import { Footer } from '@/components/Footer';
@@ -7,75 +6,13 @@ import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
 import { useProducts } from '@/hooks/useProducts';
 import { MobileShop } from '@/components/mobile/MobileShop';
+import { Loader2 } from 'lucide-react';
 
-const fallbackBookData = [
-  {
-    id: 'book-1',
-    title: "Indian Penal Code - Complete Commentary",
-    category: "Criminal Law",
-    price: 899,
-    originalPrice: 1200,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop",
-    description: "Comprehensive commentary on IPC with latest amendments",
-    rating: 4.8,
-    inStock: true
-  },
-  {
-    id: 'book-2',
-    title: "Civil Procedure Code Handbook",
-    category: "Civil Law",
-    price: 750,
-    originalPrice: 950,
-    image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=500&fit=crop",
-    description: "Essential guide to civil procedure with case studies",
-    rating: 4.6,
-    inStock: true
-  },
-  {
-    id: 'book-3',
-    title: "Constitutional Law of India",
-    category: "Constitutional Law",
-    price: 1299,
-    originalPrice: 1599,
-    image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&h=500&fit=crop",
-    description: "Authoritative text on Indian constitutional law",
-    rating: 4.9,
-    inStock: true
-  },
-  {
-    id: 'book-4',
-    title: "Odisha Land Laws Manual",
-    category: "Odisha Law",
-    price: 650,
-    originalPrice: 800,
-    image: "https://images.unsplash.com/photo-1589829545856-d10d85525114?w=400&h=500&fit=crop",
-    description: "Complete guide to Odisha land revenue laws",
-    rating: 4.5,
-    inStock: true
-  },
-  {
-    id: 'book-5',
-    title: "Family Law & Personal Laws",
-    category: "Family Law",
-    price: 540,
-    originalPrice: 720,
-    image: "https://images.unsplash.com/photo-1553729459-efe14ef6055d?w=400&h=500&fit=crop",
-    description: "Comprehensive coverage of family and personal laws",
-    rating: 4.4,
-    inStock: false
-  },
-  {
-    id: 'book-6',
-    title: "Tax Laws with Case Studies",
-    category: "Tax Law",
-    price: 980,
-    originalPrice: 1200,
-    image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=500&fit=crop",
-    description: "Updated tax laws with practical case studies",
-    rating: 4.7,
-    inStock: true
-  }
-];
+/**
+ * Books renders ONLY real Supabase products in the `books` category.
+ * No mock fallback titles. Empty state and loading state are explicit.
+ */
+const PLACEHOLDER_IMG = '/lovable-uploads/bd9562f0-5286-4441-82a0-f16eac646a5f.png';
 
 const Books = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,67 +21,53 @@ const Books = () => {
   const { addToCart } = useCart();
   const { products, loading } = useProducts();
 
-  console.log('📚 Books Page - Products from hook:', products.length, products);
-  console.log('📚 Books Page - Loading:', loading);
-
-  // Use Firebase products (books only) if available, otherwise use fallback
-  const booksFromFirebase = products.filter(p => p.category === 'books');
-  console.log('📚 Books filtered from Firebase:', booksFromFirebase.length);
-
-  const bookData = booksFromFirebase.length > 0 
-    ? booksFromFirebase.map(p => ({
-        id: p.id,
-        title: p.title,
-        category: p.author || 'Books',
-        price: p.price,
-        originalPrice: p.price * 1.2,
-        image: p.image_url || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=500&fit=crop',
-        description: p.description || '',
-        rating: 4.5,
-        inStock: p.stock > 0
-      }))
-    : fallbackBookData;
-
-  console.log('📚 Books Page - Final bookData:', bookData.length, 'items');
+  const bookData = products
+    .filter((p) => p.category === 'books')
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      category: p.author || 'Books',
+      price: p.price,
+      originalPrice: p.price * 1.2,
+      image: p.image_url && p.image_url.trim() ? p.image_url : PLACEHOLDER_IMG,
+      description: p.description || '',
+      rating: 4.5,
+      inStock: p.stock > 0,
+    }));
 
   const categories = ['All', 'Criminal Law', 'Civil Law', 'Constitutional Law', 'Odisha Law', 'Family Law', 'Tax Law'];
   const sortOptions = [
     { value: 'name', label: 'Name' },
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'rating', label: 'Rating' }
+    { value: 'rating', label: 'Rating' },
   ];
 
-  let filteredBooks = bookData.filter(book => {
-    const matchesSearch = book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         book.description.toLowerCase().includes(searchTerm.toLowerCase());
+  let filteredBooks = bookData.filter((book) => {
+    const matchesSearch =
+      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      book.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || book.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // Sort books
   filteredBooks = filteredBooks.sort((a, b) => {
     switch (sortBy) {
-      case 'name':
-        return a.title.localeCompare(b.title);
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'rating':
-        return b.rating - a.rating;
-      default:
-        return 0;
+      case 'name': return a.title.localeCompare(b.title);
+      case 'price-low': return a.price - b.price;
+      case 'price-high': return b.price - a.price;
+      case 'rating': return b.rating - a.rating;
+      default: return 0;
     }
   });
 
-  const handleAddToCart = (book: typeof bookData[0]) => {
+  const handleAddToCart = (book: typeof bookData[number]) => {
     addToCart({
       id: book.id,
       title: book.title,
       price: book.price,
       image: book.image,
-      category: book.category
+      category: book.category,
     });
   };
 
@@ -187,7 +110,7 @@ const Books = () => {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className="w-full p-2 rounded-md bg-[#0F0616] border border-[#D4AF37]/30 text-white"
                 >
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <option key={category} value={category}>{category}</option>
                   ))}
                 </select>
@@ -199,7 +122,7 @@ const Books = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full p-2 rounded-md bg-[#0F0616] border border-[#D4AF37]/30 text-white"
                 >
-                  {sortOptions.map(option => (
+                  {sortOptions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
@@ -207,89 +130,105 @@ const Books = () => {
             </div>
           </div>
 
-          {/* Books Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredBooks.map((book, index) => (
-              <div
-                key={book.id}
-                className="group bg-[#1a0a2e] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37]/60 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#D4AF37]/20 animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="relative overflow-hidden">
-                  <img
-                    src={book.image}
-                    alt={book.title}
-                    className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0F0616]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Button
-                      onClick={() => handleAddToCart(book)}
-                      disabled={!book.inStock}
-                      className="bg-[#D4AF37] text-[#0F0616] hover:bg-[#f4d03f] font-semibold transform scale-0 group-hover:scale-100 transition-transform duration-300"
-                    >
-                      {book.inStock ? '🛒 Add to Cart' : 'Out of Stock'}
-                    </Button>
-                  </div>
-                  
-                  {/* Stock status */}
-                  {!book.inStock && (
-                    <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full font-semibold text-sm">
-                      Out of Stock
-                    </div>
-                  )}
-                  
-                  {/* Discount badge */}
-                  {book.originalPrice > book.price && (
-                    <div className="absolute top-4 left-4 bg-[#D4AF37] text-[#0F0616] px-3 py-1 rounded-full font-semibold text-sm">
-                      {Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)}% OFF
-                    </div>
-                  )}
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[#D4AF37] text-sm font-semibold bg-[#D4AF37]/10 px-2 py-1 rounded">
-                      {book.category}
-                    </span>
-                    <div className="flex items-center text-yellow-400">
-                      <span className="text-sm">⭐ {book.rating}</span>
-                    </div>
-                  </div>
-                  
-                  <h3 className="text-lg font-serif font-bold text-white mb-2 group-hover:text-[#D4AF37] transition-colors line-clamp-2">
-                    {book.title}
-                  </h3>
-                  
-                  <p className="text-gray-300 mb-4 text-sm line-clamp-2">
-                    {book.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-[#D4AF37]">₹{book.price}</span>
+          {/* Loading / empty / no-match states */}
+          {loading && bookData.length === 0 ? (
+            <div className="text-center py-20">
+              <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin text-[#D4AF37]" />
+              <p className="text-gray-400 text-base">Loading the catalog…</p>
+            </div>
+          ) : bookData.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="text-6xl mb-4">📚</div>
+              <p className="text-2xl font-serif font-bold text-[#D4AF37] mb-2">The catalog is being prepared</p>
+              <p className="text-gray-400 max-w-md mx-auto">
+                Our team is uploading the latest legal books. Check back soon, or call us at +91 94370 19131 for direct orders.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredBooks.map((book, index) => (
+                  <div
+                    key={book.id}
+                    className="group bg-[#1a0a2e] rounded-xl overflow-hidden border border-[#D4AF37]/20 hover:border-[#D4AF37]/60 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#D4AF37]/20 animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="relative overflow-hidden">
+                      <img
+                        src={book.image}
+                        alt={book.title}
+                        className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER_IMG; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0F0616]/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <Button
+                          onClick={() => handleAddToCart(book)}
+                          disabled={!book.inStock}
+                          className="bg-[#D4AF37] text-[#0F0616] hover:bg-[#f4d03f] font-semibold transform scale-0 group-hover:scale-100 transition-transform duration-300"
+                        >
+                          {book.inStock ? '🛒 Add to Cart' : 'Out of Stock'}
+                        </Button>
+                      </div>
+
+                      {!book.inStock && (
+                        <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full font-semibold text-sm">
+                          Out of Stock
+                        </div>
+                      )}
+
                       {book.originalPrice > book.price && (
-                        <span className="text-gray-500 line-through text-sm">₹{book.originalPrice}</span>
+                        <div className="absolute top-4 left-4 bg-[#D4AF37] text-[#0F0616] px-3 py-1 rounded-full font-semibold text-sm">
+                          {Math.round(((book.originalPrice - book.price) / book.originalPrice) * 100)}% OFF
+                        </div>
                       )}
                     </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleAddToCart(book)}
-                    disabled={!book.inStock}
-                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#f4d03f] text-[#0F0616] hover:scale-105 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {book.inStock ? '🛒 Add to Cart' : 'Out of Stock'}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
 
-          {filteredBooks.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">📚</div>
-              <p className="text-gray-400 text-xl">No books found matching your criteria</p>
-            </div>
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[#D4AF37] text-sm font-semibold bg-[#D4AF37]/10 px-2 py-1 rounded">
+                          {book.category}
+                        </span>
+                        <div className="flex items-center text-yellow-400">
+                          <span className="text-sm">⭐ {book.rating}</span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-lg font-serif font-bold text-white mb-2 group-hover:text-[#D4AF37] transition-colors line-clamp-2">
+                        {book.title}
+                      </h3>
+
+                      <p className="text-gray-300 mb-4 text-sm line-clamp-2">
+                        {book.description}
+                      </p>
+
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl font-bold text-[#D4AF37]">₹{book.price}</span>
+                          {book.originalPrice > book.price && (
+                            <span className="text-gray-500 line-through text-sm">₹{book.originalPrice}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={() => handleAddToCart(book)}
+                        disabled={!book.inStock}
+                        className="w-full bg-gradient-to-r from-[#D4AF37] to-[#f4d03f] text-[#0F0616] hover:scale-105 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {book.inStock ? '🛒 Add to Cart' : 'Out of Stock'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {filteredBooks.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-6xl mb-4">📚</div>
+                  <p className="text-gray-400 text-xl">No books match your search</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>
