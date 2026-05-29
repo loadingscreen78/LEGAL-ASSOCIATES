@@ -1,7 +1,7 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, Scale, Briefcase } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff, Mail, Lock, Scale, Briefcase, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,17 +9,54 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AnimatedLogo } from '@/components/AnimatedLogo';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
+import { login as loginApi } from '@/lib/authLogin';
 
 const AdminLogin = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const { theme } = useTheme();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Anti-bot signals (server validates these silently)
+  const formStartedAtRef = useRef<number>(Date.now());
+  const [honeypot, setHoneypot] = useState('');
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Login logic will be added later
-    console.log('Login attempt:', { email, password });
+    if (submitting) return;
+    setSubmitting(true);
+
+    const result = await loginApi({
+      email,
+      password,
+      asAdmin: true,
+      honeypot,
+      formStartedAt: formStartedAtRef.current,
+    });
+
+    if (!result.ok) {
+      if (result.shouldRedirectHome) {
+        navigate('/', { replace: true });
+        return;
+      }
+      toast({
+        title: 'Sign in failed',
+        description: result.error,
+        variant: 'destructive',
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    toast({
+      title: 'Welcome back',
+      description: 'Loading the admin dashboard…',
+    });
+    navigate('/admin-dashboard');
   };
 
   return (
@@ -113,12 +150,45 @@ const AdminLogin = () => {
                 </div>
               </div>
 
+              {/* Honeypot — hidden trap for form-filling bots. Server
+                  rejects submissions where this is non-empty. */}
+              <div
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  top: 'auto',
+                  width: 1,
+                  height: 1,
+                  overflow: 'hidden',
+                }}
+              >
+                <Label htmlFor="la_admin_company_url">Company URL (leave empty)</Label>
+                <Input
+                  id="la_admin_company_url"
+                  name="la_admin_company_url"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+
               {/* Login Button */}
               <Button
                 type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-300 hover:shadow-lg hover:shadow-accent/25"
+                disabled={submitting}
+                className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-300 hover:shadow-lg hover:shadow-accent/25 disabled:opacity-60"
               >
-                Login to Admin Portal
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Signing in…
+                  </span>
+                ) : (
+                  'Login to Admin Portal'
+                )}
               </Button>
 
               {/* Forgot Password Link */}

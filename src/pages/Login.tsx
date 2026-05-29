@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Scale, Home, Shield, User, ArrowRight, LogIn, Mail, Lock, UserPlus } from 'lucide-react';
 import { AnimatedLogo } from '@/components/AnimatedLogo';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { requestSignupOtp } from '@/lib/authOtp';
+import { login as loginApi } from '@/lib/authLogin';
 import { MobileLogin } from '@/components/mobile/MobileLogin';
 
 const Login = () => {
@@ -28,6 +29,14 @@ const Login = () => {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(false);
   const [loaderStage, setLoaderStage] = useState<'authenticating' | 'success' | 'redirecting'>('authenticating');
+
+  // Anti-bot signals (server validates these, no UI hints).
+  // - honeypot: a CSS-hidden text input. Real users never touch it; many
+  //   form-filling bots blindly populate every input on the page.
+  // - formStartedAt: epoch when the form was rendered. The server rejects
+  //   submissions that arrive faster than ~0.8s — humans are slower.
+  const formStartedAtRef = useRef<number>(Date.now());
+  const [honeypot, setHoneypot] = useState('');
 
   // Theme colors
   const colors = {
@@ -117,18 +126,48 @@ const Login = () => {
         navigate('/verify-otp');
         return;
       } else {
-        const { error, isAdmin, data } = await signIn(email, password, loginType === 'admin' ? securityCode : undefined);
-        if (error) throw error;
-        if (loginType !== 'admin' && data?.user && !data.user.email_confirmed_at) {
+        // Sign-in goes through our server-mediated /api/auth/login. The
+        // server rate-limits + applies bot heuristics; the client just
+        // tracks consecutive failures so it can quietly redirect to the
+        // landing page after 5 (per spec — no UI hint about the limit).
+        const result = await loginApi({
+          email,
+          password,
+          asAdmin: loginType === 'admin',
+          honeypot,
+          formStartedAt: formStartedAtRef.current,
+        });
+
+        if (!result.ok) {
+          if (result.shouldRedirectHome) {
+            // Silent bail — match the spec exactly: no toast, no error
+            // explaining why, just go home.
+            navigate('/', { replace: true });
+            return;
+          }
+          // Generic toast — same wording for wrong-creds AND lockout so
+          // attackers can't tell which (this matches the server response).
+          toast({
+            title: 'Sign in failed',
+            description: result.error,
+            variant: 'destructive',
+          });
           setLoading(false);
-          navigate('/verify-email');
           return;
         }
+
         setLoaderStage('success');
+        // After /api/auth/login installs the session, useAuth picks up the
+        // user via onAuthStateChange. The redirect target depends on whether
+        // they're an admin — the AuthContext hook resolves that, so we wait
+        // a beat for the state to settle before routing.
         setTimeout(() => {
           setLoaderStage('redirecting');
-          setTimeout(() => navigate(loginType === 'admin' || isAdmin ? '/admin-dashboard' : '/user-dashboard'), 1500);
-        }, 2000);
+          setTimeout(
+            () => navigate(loginType === 'admin' ? '/admin-dashboard' : '/user-dashboard'),
+            1500
+          );
+        }, 1500);
       }
     } catch (error: any) {
       // Supabase sends "Invalid login credentials" for wrong password AND for
@@ -280,6 +319,33 @@ const Login = () => {
                 <Link to="#" className="text-sm font-medium transition-colors duration-300 hover:underline" style={{ color: '#D4AF37' }}>Forgot password?</Link>
               </div>
             )}
+
+            {/* Honeypot — CSS-hidden trap. Real users never see or focus
+                this. Bots that auto-fill every input will populate it and
+                get rejected silently by the server. The aria attributes and
+                tabIndex/autoComplete keep assistive tech away from it. */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                left: '-9999px',
+                top: 'auto',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+              }}
+            >
+              <label htmlFor="la_company_url">Company URL (leave empty)</label>
+              <input
+                id="la_company_url"
+                name="la_company_url"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+              />
+            </div>
 
             {/* Submit Button */}
             <button type="submit" disabled={loading} className="w-full py-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all duration-300 hover:scale-105 disabled:opacity-50" style={{ background: '#D4AF37', color: '#2D3E50', boxShadow: '0 10px 30px rgba(212, 175, 55, 0.3)' }}>
