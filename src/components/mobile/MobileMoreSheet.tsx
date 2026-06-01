@@ -69,6 +69,15 @@ export const MobileMoreSheet = () => {
         { href: buildContactMailto('general'), label: 'Email us', icon: Mail, sub: CONTACT_EMAIL },
       ],
     },
+    {
+      heading: 'Legal',
+      items: [
+        { to: '/terms', label: 'Terms of Service', icon: FileText },
+        { to: '/privacy', label: 'Privacy Policy', icon: ShieldCheck },
+        { to: '/refund-policy', label: 'Refund & Cancellation', icon: FileText },
+        { to: '/shipping-policy', label: 'Shipping Policy', icon: Truck },
+      ],
+    },
   ];
 
   return (

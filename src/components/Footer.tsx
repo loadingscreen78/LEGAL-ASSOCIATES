@@ -145,6 +145,24 @@ export const Footer = () => {
       {/* Copyright */}
       <div className="py-6" style={{ background: 'rgba(0, 0, 0, 0.3)', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
         <div className="container mx-auto px-4 text-center">
+          {/* Policy links — required for e-commerce / payment-gateway compliance */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mb-4">
+            {[
+              { label: 'Terms of Service', href: '/terms' },
+              { label: 'Privacy Policy', href: '/privacy' },
+              { label: 'Refund & Cancellation', href: '/refund-policy' },
+              { label: 'Shipping Policy', href: '/shipping-policy' },
+            ].map((p) => (
+              <Link
+                key={p.href}
+                to={p.href}
+                className="text-sm transition-colors hover:text-white"
+                style={{ color: 'rgba(255, 255, 255, 0.6)' }}
+              >
+                {p.label}
+              </Link>
+            ))}
+          </div>
           <p className="text-sm" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>© 2024 Legal Associates. All Rights Reserved.</p>
           <p className="text-sm mt-1" style={{ color: '#D4AF37' }}>Empowering Legal Minds Since Decades</p>
         </div>
